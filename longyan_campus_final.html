@@ -1,0 +1,3466 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>龙岩学院校园导览</title>
+    <script src="assets/vendor/pannellum/pannellum.js"></script>
+    <link rel="stylesheet" href="assets/vendor/pannellum/pannellum.css">
+    <link rel="stylesheet" href="assets/css/panorama.css?v=matched-menus-20261030-1">
+    <style>
+        :root {
+            --header-height: 55px;
+            --lyun-red: #C8102E;
+            --lyun-text: #2b2b2b;
+            --glass-white: rgba(255,255,255,0.92);
+            --menu-background: #ffffff;
+            --menu-radius: 10px;
+            --menu-shadow: 0 8px 24px rgba(0,0,0,0.14);
+        }
+        * { margin: 0; padding: 0; box-sizing: border-box; }
+        body {
+            font-family: "Microsoft YaHei", sans-serif;
+            overflow: hidden;
+            background: #000;
+        }
+        #top-bar {
+            position: fixed; top: 0; left: 0; right: 0; height: var(--header-height);
+            background: linear-gradient(90deg, #b80e29, #C8102E, #b80e29);
+            z-index: 100; display: flex; align-items: center; padding: 0 32px;
+            color: #fff; box-shadow: 0 2px 12px rgba(0,0,0,0.2);
+        }
+        #logo-area {
+            font-size: 20px; font-family: serif; padding-left: 12px; white-space: nowrap;
+            border-left: 4px solid #fff; letter-spacing: 2px;
+        }
+        .nav-menu {
+            position: relative; margin-left: 28px; height: var(--header-height); flex-shrink: 0;
+            display: flex; align-items: center; cursor: pointer;
+            font-size: 14px; padding: 0 14px;
+        }
+        .dropdown {
+            position: absolute; top: var(--header-height); left: 0; width: 420px;
+            max-width: calc(100vw - 32px); background: var(--menu-background); color: #333;
+            border: 1px solid #eeeeee; border-radius: var(--menu-radius);
+            box-shadow: var(--menu-shadow);
+            opacity: 0; visibility: hidden; transform: translateY(10px);
+            transition: opacity 0.25s, visibility 0.25s, transform 0.25s;
+            overflow: hidden; cursor: default;
+        }
+        .nav-menu:hover .dropdown {
+            opacity: 1; visibility: visible; transform: translateY(0);
+        }
+        .nav-menu.is-open .dropdown {
+            opacity: 1; visibility: visible; transform: translateY(0);
+        }
+        .dropdown-header {
+            padding: 14px 20px; background: #f5f5f6;
+            color: #C8102E; font-size: 14px; font-weight: 700;
+            border-bottom: 1px solid #eeeeee;
+        }
+        .dropdown-content {
+            padding: 0 20px; max-height: calc(100vh - var(--header-height) - 66px);
+            overflow-y: auto; overscroll-behavior: contain;
+            scrollbar-width: thin;
+        }
+        .dropdown-group { padding: 14px 0; }
+        .dropdown-group + .dropdown-group { border-top: 1px solid #eeeeee; }
+        .dropdown-group-title {
+            display: flex; align-items: center; gap: 9px;
+            color: #C8102E; font-size: 14px; font-weight: 700; line-height: 20px;
+        }
+        .dropdown-group-title::before {
+            content: ''; display: block; width: 4px; height: 16px;
+            flex-shrink: 0; border-radius: 2px; background: #C8102E;
+        }
+        .dropdown-places { display: flex; flex-wrap: wrap; gap: 8px; margin-top: 10px; }
+        .dropdown-item {
+            padding: 7px 12px; border: none; border-radius: 4px;
+            background: #f3f4f5; color: #444; font: inherit;
+            font-size: 13px; line-height: 18px; white-space: nowrap; cursor: pointer;
+            transition: background-color 0.18s, color 0.18s;
+        }
+        .dropdown-item:not(:disabled):hover,
+        .dropdown-item:not(:disabled):focus-visible {
+            background: #C8102E; color: #ffffff;
+        }
+        .dropdown-item:disabled { color: #999; cursor: not-allowed; }
+        .dropdown-pending { margin-left: 4px; font-size: 11px; }
+        #search-area {
+            position: relative; margin-left: 24px; width: 240px;
+            min-width: 0; display: flex; align-items: center;
+        }
+        #search-box {
+            width: 100%; height: 30px; min-width: 0;
+            border: none; padding: 0 14px; font-size: 14px;
+        }
+        #search-history {
+            position: absolute; top: 100%; left: 0; width: 100%;
+            background: #ffffff; color: #333; z-index: 200;
+            box-shadow: 0 4px 16px rgba(0,0,0,0.15);
+        }
+        .history-item {
+            display: block; width: 100%; padding: 12px 14px;
+            border: none; background: #ffffff; color: #333;
+            font: inherit; font-size: 14px; text-align: left;
+            overflow-wrap: anywhere; cursor: pointer;
+        }
+        .history-item:hover { color: #C8102E; }
+        #mode-switch { margin-left: auto; display: flex; flex-shrink: 0; }
+        .mode-btn {
+            padding: 6px 14px; background: transparent; border: none;
+            color: #fff; cursor: pointer; font-size: 14px;
+        }
+        .mode-btn.active { background: #fff; color: var(--lyun-red); }
+        #panorama-container {
+            position: fixed; top: var(--header-height); left: 0; width: 100vw; height: calc(100vh - var(--header-height));
+            touch-action: none;
+        }
+        .info-card {
+            position: fixed; right: 0; top: 50%;
+            transform: translate(calc(100% - 36px), -50%);
+            width: min(320px, calc(100vw - 24px)); background: var(--glass-white);
+            background: rgba(255,255,255,0.76); backdrop-filter: blur(20px);
+            -webkit-backdrop-filter: blur(20px); padding: 28px 26px;
+            border: 1px solid rgba(255,255,255,0.7); border-right: 0;
+            border-radius: 16px 0 0 16px; box-shadow: -12px 10px 34px rgba(0,0,0,0.18);
+            z-index: 50; transition: transform 0.32s cubic-bezier(.22,.61,.36,1);
+            will-change: transform;
+        }
+        .info-card:not(.is-dismissed):hover, .info-card:focus-within, .info-card.is-open { transform: translate(0, -50%); }
+        .info-card::before {
+            content: "建筑介绍"; position: absolute; left: 0; top: 50%;
+            transform: translate(-100%, -50%); writing-mode: vertical-rl;
+            text-orientation: upright; white-space: nowrap;
+            width: 36px; height: 150px; display: flex;
+            align-items: center; justify-content: center; line-height: 1;
+            background: var(--lyun-red); color: #fff; padding: 18px 8px;
+            font-size: 15px; letter-spacing: 9px; border-radius: 16px 0 0 16px;
+            box-shadow: -5px 8px 18px rgba(200,16,46,0.2);
+        }
+        .info-card h3 {
+            color: var(--lyun-red); margin: 0 0 10px; font-size: 22px;
+            line-height: 1.35; padding-left: 14px; border-left: 5px solid var(--lyun-red);
+        }
+        .info-category {
+            display: inline-flex; align-items: center; min-height: 24px;
+            margin: 0 0 16px; padding: 3px 10px; border-radius: 999px;
+            background: rgba(226,227,229,0.86); color: #666;
+            font-size: 12px; line-height: 1.4;
+        }
+        .info-card #info-desc { margin: 0; font-size: 14px; line-height: 2; color: #222; }
+        @media (max-width: 720px) {
+            :root { --header-height: 78px; }
+            #top-bar {
+                height: var(--header-height); padding: 4px 8px;
+                flex-wrap: wrap; align-content: center; gap: 2px 4px;
+            }
+            #logo-area {
+                max-width: 118px; overflow: hidden; text-overflow: ellipsis;
+                font-size: 14px; padding-left: 7px; border-left-width: 3px;
+                letter-spacing: 1px;
+            }
+            .nav-menu {
+                height: 34px; margin-left: 2px; padding: 0 6px; font-size: 12px;
+            }
+            .dropdown {
+                top: var(--header-height); left: -4px;
+                width: calc(100vw - 16px); max-width: calc(100vw - 16px);
+            }
+            .dropdown-header { padding: 11px 14px; font-size: 12px; }
+            .dropdown-content { padding: 0 14px; max-height: calc(100vh - var(--header-height) - 50px); }
+            .dropdown-group { padding: 11px 0; }
+            .dropdown-places { gap: 6px; margin-top: 8px; }
+            .dropdown-item { padding: 6px 9px; font-size: 12px; line-height: 16px; }
+            #mode-switch { margin-left: auto; }
+            .mode-btn { padding: 5px 6px; font-size: 11px; white-space: nowrap; }
+            #search-area {
+                order: 3; flex: 1 0 100%; width: auto; height: 28px; margin: 0;
+            }
+            #search-box { height: 28px; padding: 0 10px; font-size: 12px; }
+            #search-history { top: 100%; max-height: 42vh; overflow-y: auto; }
+            .history-item { padding: 9px 10px; font-size: 12px; }
+            #aerial-options {
+                top: calc(var(--header-height) + 6px); right: 8px;
+                width: calc(100vw - 16px); max-width: calc(100vw - 16px);
+            }
+            #aerial-options button { min-height: 44px; padding: 10px 14px; font-size: 13px; }
+            #aerial-notice { padding: 9px 14px; font-size: 12px; }
+            .info-card {
+                width: min(280px, calc(100vw - 18px));
+                padding: 22px 22px;
+                transform: translate(calc(100% - 32px), -50%);
+            }
+            .info-card:not(.is-dismissed):hover,
+            .info-card:focus-within,
+            .info-card.is-open { transform: translate(0, -50%); }
+            .info-card::before {
+                width: 32px; height: 132px; padding: 16px 7px;
+                font-size: 14px; letter-spacing: 7px;
+            }
+            .info-card h3 { font-size: 19px; margin-bottom: 8px; }
+            .info-category { margin-bottom: 12px; }
+            .info-card #info-desc { font-size: 13px; line-height: 1.9; }
+        }
+        @media (max-width: 380px) {
+            #logo-area { max-width: 96px; font-size: 13px; }
+            .nav-menu { padding-inline: 5px; font-size: 11px; }
+            .mode-btn { padding-inline: 4px; font-size: 10px; }
+        }
+    </style>
+</head>
+<body>
+    <div id="top-bar">
+        <div id="logo-area">龙岩学院校园导览</div>
+        <div class="nav-menu">
+            校园地点
+            <div class="dropdown">
+                <div class="dropdown-header">校园导览 · 地点导航</div>
+                <div class="dropdown-content" id="location-menu" aria-busy="true">
+                    <p class="dropdown-loading">正在加载地点…</p>
+                </div>
+            </div>
+        </div>
+        <div id="search-area">
+            <input type="text" id="search-box" placeholder="搜索地点（如：同心楼）" autocomplete="off" aria-controls="search-history" aria-expanded="false">
+            <div id="search-history" hidden></div>
+        </div>
+        <div id="mode-switch">
+            <button type="button" class="mode-btn active" id="panorama-mode">360全景</button>
+            <button class="mode-btn">自由漫游</button>
+            <button type="button" class="mode-btn" id="aerial-mode" aria-controls="aerial-options" aria-expanded="false">鸟瞰全貌</button>
+        </div>
+    </div>
+    <div id="aerial-options" role="group" aria-label="鸟瞰模式选项" hidden>
+        <button type="button" id="aerial-2d" disabled>2D全景鸟瞰</button>
+        <button type="button" id="aerial-3d">3D校园鸟瞰（建设中）</button>
+        <p id="aerial-notice" role="status" aria-live="polite" hidden>3D模型正在建设中，敬请期待</p>
+    </div>
+    <button type="button" id="return-panorama" hidden>← 返回普通全景</button>
+    <div id="panorama-container" aria-busy="true"></div>
+    <div id="scene-loading" role="status" aria-live="polite">
+        <img id="loading-preview" alt="">
+        <div class="loading-panel">
+            <p id="loading-message">正在读取校园导览数据…</p>
+            <progress id="loading-progress" max="100" aria-label="全景加载进度"></progress>
+            <p id="loading-percent">准备加载…</p>
+            <button type="button" id="loading-retry" hidden>重新加载</button>
+        </div>
+    </div>
+    <div class="info-card" role="region" aria-label="建筑介绍">
+        <button type="button" id="info-close" aria-label="收起建筑介绍" hidden>×</button>
+        <h3 id="info-title">校园导览</h3>
+        <span id="info-category" class="info-category">校园导览</span>
+        <p id="info-desc">正在读取场景介绍…</p>
+        <button type="button" id="info-go" hidden>前往该地点</button>
+    </div>
+    <script id="campus-locations-data">
+const CAMPUS_LOCATIONS = {
+  "version": 1,
+  "defaultLocationId": "20071515",
+  "overviewLocationId": "20071519",
+  "overviewView": {
+    "pitch": -35,
+    "yaw": 0,
+    "hfov": 100
+  },
+  "categories": [
+    "校门入口",
+    "教学办公区",
+    "生活服务区",
+    "运动休闲区"
+  ],
+  "source": "https://www.720yun.com/t/12vknmqypp9",
+  "coordinateConvention": "yaw = ath; pitch = -atv. Image projection preserved without horizontal rotation.",
+  "pendingLocations": [
+    {
+      "name": "同心楼",
+      "category": "教学办公区",
+      "menuOrder": 0,
+      "status": "场景待确认"
+    },
+    {
+      "name": "恩泽湖",
+      "category": "运动休闲区",
+      "menuOrder": 7.5,
+      "status": "场景待确认"
+    }
+  ],
+  "locations": [
+    {
+      "id": "20071515",
+      "name": "龙岩学院正大门",
+      "category": "校门入口",
+      "menuLabel": "正大门",
+      "menuOrder": 1,
+      "panorama": "assets/panoramas/20071515.webp",
+      "thumbnail": "assets/panoramas/thumbnails/20071515.webp",
+      "position": null,
+      "neighbors": [
+        "20071508",
+        "20071519",
+        "20071517"
+      ],
+      "hotspots": [
+        {
+          "id": "s_31703175_0",
+          "label": "→ 前往行政楼",
+          "target": "20071508",
+          "yaw": 0.703,
+          "pitch": 7.807,
+          "source": "720yun",
+          "sourceAngles": {
+            "ath": 0.703,
+            "atv": -7.807
+          }
+        },
+        {
+          "id": "s_31703175_1",
+          "label": "→ 前往鸟瞰全景",
+          "target": "20071519",
+          "yaw": 27.685,
+          "pitch": 52.209,
+          "source": "720yun",
+          "sourceAngles": {
+            "ath": 27.685,
+            "atv": -52.209
+          }
+        },
+        {
+          "id": "reverse_20071515_20071517",
+          "label": "→ 前往体育馆",
+          "target": "20071517",
+          "yaw": -32,
+          "pitch": -10,
+          "source": "supplemental-reverse",
+          "reverseOf": "s_31703177_2",
+          "note": "根据原导航已有连接补充反向跳转；胶囊位置为界面排布，非实测道路方位。"
+        }
+      ],
+      "description": "从正大门开始认识龙院，校园导览和出行都可以从这里展开。",
+      "descriptionStatus": "official-gallery",
+      "descriptionSources": [
+        {
+          "url": "https://www.lyun.edu.cn/info/1013/6953.htm",
+          "title": "校大门-龙岩学院",
+          "accessed": "2026-10-30"
+        }
+      ],
+      "shortDescription": "从正大门开始认识龙院，校园导览和出行都可以从这里展开。",
+      "descriptionTone": "friendly-guide"
+    },
+    {
+      "id": "20071508",
+      "name": "行政楼",
+      "category": "教学办公区",
+      "menuLabel": "行政楼",
+      "menuOrder": 7,
+      "panorama": "assets/panoramas/20071508.webp",
+      "thumbnail": "assets/panoramas/thumbnails/20071508.webp",
+      "position": null,
+      "neighbors": [
+        "20071502",
+        "20071515",
+        "20071519",
+        "20071517",
+        "20071509",
+        "20071524",
+        "46495198"
+      ],
+      "hotspots": [
+        {
+          "id": "s_31703168_0",
+          "label": "→ 前往88级台阶",
+          "target": "20071502",
+          "yaw": 53.733,
+          "pitch": 3.488,
+          "source": "720yun",
+          "sourceAngles": {
+            "ath": 53.733,
+            "atv": -3.488
+          }
+        },
+        {
+          "id": "s_31703168_1",
+          "label": "→ 前往正大门",
+          "target": "20071515",
+          "yaw": -154.288,
+          "pitch": 2.299,
+          "source": "720yun",
+          "sourceAngles": {
+            "ath": -154.288,
+            "atv": -2.299
+          }
+        },
+        {
+          "id": "s_31703168_2",
+          "label": "→ 前往鸟瞰全景",
+          "target": "20071519",
+          "yaw": 77.692,
+          "pitch": 30.78,
+          "source": "720yun",
+          "sourceAngles": {
+            "ath": 77.692,
+            "atv": -30.78
+          }
+        },
+        {
+          "id": "reverse_20071508_20071517",
+          "label": "→ 前往体育馆",
+          "target": "20071517",
+          "yaw": -32,
+          "pitch": -10,
+          "source": "supplemental-reverse",
+          "reverseOf": "s_31703177_0",
+          "note": "根据原导航已有连接补充反向跳转；胶囊位置为界面排布，非实测道路方位。"
+        },
+        {
+          "id": "reverse_20071508_20071509",
+          "label": "→ 前往鹤池艺术楼",
+          "target": "20071509",
+          "yaw": -10,
+          "pitch": -10,
+          "source": "supplemental-reverse",
+          "reverseOf": "s_31703169_3",
+          "note": "根据原导航已有连接补充反向跳转；胶囊位置为界面排布，非实测道路方位。"
+        },
+        {
+          "id": "reverse_20071508_20071524",
+          "label": "→ 前往西区田径场",
+          "target": "20071524",
+          "yaw": 12,
+          "pitch": -10,
+          "source": "supplemental-reverse",
+          "reverseOf": "s_31703184_2",
+          "note": "根据原导航已有连接补充反向跳转；胶囊位置为界面排布，非实测道路方位。"
+        },
+        {
+          "id": "reverse_20071508_46495198",
+          "label": "→ 前往学生活动中心",
+          "target": "46495198",
+          "yaw": 34,
+          "pitch": -10,
+          "source": "supplemental-reverse",
+          "reverseOf": "s_83335522_4",
+          "note": "根据原导航已有连接补充反向跳转；胶囊位置为界面排布，非实测道路方位。"
+        }
+      ],
+      "description": "这里是学校行政办公区，很多校级会议和综合事务会在这里办理。",
+      "descriptionStatus": "official-context",
+      "descriptionSources": [
+        {
+          "url": "https://htdsd.lyun.edu.cn/info/1008/47759.htm",
+          "title": "我校举办铸牢中华民族共同体意识专题讲座-龙岩学院—红土地视点",
+          "accessed": "2026-10-30"
+        }
+      ],
+      "shortDescription": "这里是学校行政办公区，很多校级会议和综合事务会在这里办理。",
+      "descriptionTone": "friendly-guide"
+    },
+    {
+      "id": "20071502",
+      "name": "88级台阶",
+      "category": "运动休闲区",
+      "menuLabel": "88级台阶",
+      "menuOrder": 9,
+      "panorama": "assets/panoramas/20071502.webp",
+      "thumbnail": "assets/panoramas/thumbnails/20071502.webp",
+      "position": null,
+      "neighbors": [
+        "20071518",
+        "20071508",
+        "20071507",
+        "20071529",
+        "46495198",
+        "20071504"
+      ],
+      "hotspots": [
+        {
+          "id": "s_31703162_0",
+          "label": "→ 前往同心广场",
+          "target": "20071518",
+          "yaw": -105.051,
+          "pitch": 5.008,
+          "source": "720yun",
+          "sourceAngles": {
+            "ath": -105.051,
+            "atv": -5.008
+          }
+        },
+        {
+          "id": "s_31703162_1",
+          "label": "→ 前往行政楼",
+          "target": "20071508",
+          "yaw": 71.814,
+          "pitch": -1.1950000000000003,
+          "source": "720yun",
+          "sourceAngles": {
+            "ath": 71.814,
+            "atv": 1.1950000000000003
+          }
+        },
+        {
+          "id": "s_31703162_2",
+          "label": "→ 前往福煤楼",
+          "target": "20071507",
+          "yaw": 107.212,
+          "pitch": -0.3780000000000001,
+          "source": "720yun",
+          "sourceAngles": {
+            "ath": 107.212,
+            "atv": 0.3780000000000001
+          }
+        },
+        {
+          "id": "reverse_20071502_20071529",
+          "label": "→ 前往逸夫实验楼",
+          "target": "20071529",
+          "yaw": -32,
+          "pitch": -10,
+          "source": "supplemental-reverse",
+          "reverseOf": "s_31703189_2",
+          "note": "根据原导航已有连接补充反向跳转；胶囊位置为界面排布，非实测道路方位。"
+        },
+        {
+          "id": "reverse_20071502_46495198",
+          "label": "→ 前往学生活动中心",
+          "target": "46495198",
+          "yaw": -10,
+          "pitch": -10,
+          "source": "supplemental-reverse",
+          "reverseOf": "s_83335522_2",
+          "note": "根据原导航已有连接补充反向跳转；胶囊位置为界面排布，非实测道路方位。"
+        },
+        {
+          "id": "route_20071502_20071504",
+          "label": "→ 前往传媒实验中心（经同心广场）",
+          "target": "20071504",
+          "yaw": 12,
+          "pitch": -10,
+          "source": "supplemental-route",
+          "route": [
+            "20071502",
+            "20071518",
+            "20071504"
+          ],
+          "note": "沿已有双向导航连接补充的两段快捷跳转，经同心广场；不代表新增直连道路，胶囊位置非实测方位。"
+        }
+      ],
+      "description": "沿着这段台阶向前走，可以感受校园道路的高差和空间变化。",
+      "descriptionStatus": "not-found",
+      "descriptionSources": [],
+      "shortDescription": "沿着这段台阶向前走，可以感受校园道路的高差和空间变化。",
+      "descriptionTone": "friendly-guide"
+    },
+    {
+      "id": "20071519",
+      "name": "龙岩学院鸟瞰全景",
+      "category": "校门入口",
+      "menuLabel": "鸟瞰全景",
+      "menuOrder": 3,
+      "panorama": "assets/panoramas/20071519.webp",
+      "thumbnail": "assets/panoramas/thumbnails/20071519.webp",
+      "position": null,
+      "neighbors": [
+        "20071518",
+        "20071526",
+        "20071517",
+        "20071515",
+        "20071510",
+        "20071505",
+        "20071524",
+        "46495194",
+        "46495197",
+        "20071511",
+        "20071523",
+        "20071514",
+        "20071516",
+        "46386863",
+        "20071530",
+        "46495198",
+        "20071508",
+        "20071529",
+        "20071507",
+        "46495201",
+        "20071522"
+      ],
+      "hotspots": [
+        {
+          "id": "s_31703179_0",
+          "label": "→ 前往同心广场",
+          "target": "20071518",
+          "yaw": 63.457,
+          "pitch": -82.218,
+          "source": "720yun",
+          "sourceAngles": {
+            "ath": 63.457,
+            "atv": 82.218
+          }
+        },
+        {
+          "id": "s_31703179_1",
+          "label": "→ 前往学生宿舍区",
+          "target": "20071526",
+          "yaw": -144.208,
+          "pitch": -21.432,
+          "source": "720yun",
+          "sourceAngles": {
+            "ath": -144.208,
+            "atv": 21.432
+          }
+        },
+        {
+          "id": "s_31703179_2",
+          "label": "→ 前往体育馆",
+          "target": "20071517",
+          "yaw": 29.971,
+          "pitch": -26.331,
+          "source": "720yun",
+          "sourceAngles": {
+            "ath": 29.971,
+            "atv": 26.331
+          }
+        },
+        {
+          "id": "s_31703179_3",
+          "label": "→ 前往正大门",
+          "target": "20071515",
+          "yaw": 43.739,
+          "pitch": -24.308,
+          "source": "720yun",
+          "sourceAngles": {
+            "ath": 43.739,
+            "atv": 24.308
+          }
+        },
+        {
+          "id": "s_31703179_4",
+          "label": "→ 前往后门",
+          "target": "20071510",
+          "yaw": 6.29,
+          "pitch": -22.373,
+          "source": "720yun",
+          "sourceAngles": {
+            "ath": 6.29,
+            "atv": 22.373
+          }
+        },
+        {
+          "id": "s_31703179_5",
+          "label": "→ 前往风雨篮球场",
+          "target": "20071505",
+          "yaw": -2.088,
+          "pitch": -47.365,
+          "source": "720yun",
+          "sourceAngles": {
+            "ath": -2.088,
+            "atv": 47.365
+          }
+        },
+        {
+          "id": "s_31703179_6",
+          "label": "→ 前往西区田径场",
+          "target": "20071524",
+          "yaw": 24.578,
+          "pitch": -36.272,
+          "source": "720yun",
+          "sourceAngles": {
+            "ath": 24.578,
+            "atv": 36.272
+          }
+        },
+        {
+          "id": "s_31703179_7",
+          "label": "→ 前往创新创业基地",
+          "target": "46495194",
+          "yaw": -11.029,
+          "pitch": -24.852,
+          "source": "720yun",
+          "sourceAngles": {
+            "ath": -11.029,
+            "atv": 24.852
+          }
+        },
+        {
+          "id": "s_31703179_8",
+          "label": "→ 前往德兴楼",
+          "target": "46495197",
+          "yaw": -20.78,
+          "pitch": -32.559,
+          "source": "720yun",
+          "sourceAngles": {
+            "ath": -20.78,
+            "atv": 32.559
+          }
+        },
+        {
+          "id": "s_31703179_9",
+          "label": "→ 前往厚德楼",
+          "target": "20071511",
+          "yaw": -90.99,
+          "pitch": -35.504,
+          "source": "720yun",
+          "sourceAngles": {
+            "ath": -90.99,
+            "atv": 35.504
+          }
+        },
+        {
+          "id": "s_31703179_10",
+          "label": "→ 前往文虎楼",
+          "target": "20071523",
+          "yaw": -91.47,
+          "pitch": -49.007,
+          "source": "720yun",
+          "sourceAngles": {
+            "ath": -91.47,
+            "atv": 49.007
+          }
+        },
+        {
+          "id": "s_31703179_11",
+          "label": "→ 前往奇迈篮球场",
+          "target": "20071514",
+          "yaw": -127.003,
+          "pitch": -44.465,
+          "source": "720yun",
+          "sourceAngles": {
+            "ath": -127.003,
+            "atv": 44.465
+          }
+        },
+        {
+          "id": "s_31703179_12",
+          "label": "→ 前往桃心湖",
+          "target": "20071516",
+          "yaw": -158.372,
+          "pitch": -51.317,
+          "source": "720yun",
+          "sourceAngles": {
+            "ath": -158.372,
+            "atv": 51.317
+          }
+        },
+        {
+          "id": "s_31703179_13",
+          "label": "→ 前往东区田径场",
+          "target": "46386863",
+          "yaw": 154.985,
+          "pitch": -48.061,
+          "source": "720yun",
+          "sourceAngles": {
+            "ath": 154.985,
+            "atv": 48.061
+          }
+        },
+        {
+          "id": "s_31703179_14",
+          "label": "→ 前往资源工程学院",
+          "target": "20071530",
+          "yaw": 122.064,
+          "pitch": -40.523,
+          "source": "720yun",
+          "sourceAngles": {
+            "ath": 122.064,
+            "atv": 40.523
+          }
+        },
+        {
+          "id": "s_31703179_15",
+          "label": "→ 前往学生活动中心",
+          "target": "46495198",
+          "yaw": 117.843,
+          "pitch": -57.836,
+          "source": "720yun",
+          "sourceAngles": {
+            "ath": 117.843,
+            "atv": 57.836
+          }
+        },
+        {
+          "id": "s_31703179_16",
+          "label": "→ 前往行政楼",
+          "target": "20071508",
+          "yaw": 60.925,
+          "pitch": -41.79,
+          "source": "720yun",
+          "sourceAngles": {
+            "ath": 60.925,
+            "atv": 41.79
+          }
+        },
+        {
+          "id": "s_31703179_17",
+          "label": "→ 前往逸夫实验楼",
+          "target": "20071529",
+          "yaw": 105.698,
+          "pitch": -45.833,
+          "source": "720yun",
+          "sourceAngles": {
+            "ath": 105.698,
+            "atv": 45.833
+          }
+        },
+        {
+          "id": "s_31703179_18",
+          "label": "→ 前往福煤楼",
+          "target": "20071507",
+          "yaw": 77.463,
+          "pitch": -49.206,
+          "source": "720yun",
+          "sourceAngles": {
+            "ath": 77.463,
+            "atv": 49.206
+          }
+        },
+        {
+          "id": "s_31703179_19",
+          "label": "→ 前往学生服务中心",
+          "target": "46495201",
+          "yaw": -173.38,
+          "pitch": -35.993,
+          "source": "720yun",
+          "sourceAngles": {
+            "ath": -173.38,
+            "atv": 35.993
+          }
+        },
+        {
+          "id": "reverse_20071519_20071522",
+          "label": "→ 前往网球场",
+          "target": "20071522",
+          "yaw": -32,
+          "pitch": -10,
+          "source": "supplemental-reverse",
+          "reverseOf": "s_31703182_2",
+          "note": "根据原导航已有连接补充反向跳转；胶囊位置为界面排布，非实测道路方位。"
+        }
+      ],
+      "description": "从高处看看龙院的整体布局，先熟悉校园的大方向。",
+      "descriptionStatus": "official-summary",
+      "descriptionSources": [
+        {
+          "url": "https://www.lyun.edu.cn/xuexiaogaik/xxjj.htm",
+          "title": "学校简介 -龙岩学院",
+          "accessed": "2026-10-30"
+        }
+      ],
+      "shortDescription": "从高处看看龙院的整体布局，先熟悉校园的大方向。",
+      "descriptionTone": "friendly-guide"
+    },
+    {
+      "id": "20071518",
+      "name": "同心广场",
+      "category": "教学办公区",
+      "menuLabel": "同心广场",
+      "menuOrder": 1,
+      "panorama": "assets/panoramas/20071518.webp",
+      "thumbnail": "assets/panoramas/thumbnails/20071518.webp",
+      "position": null,
+      "neighbors": [
+        "20071519",
+        "20071502",
+        "20071523",
+        "20071521",
+        "20071504",
+        "20071526",
+        "20071505",
+        "46495202",
+        "46495198",
+        "46495197",
+        "20071520"
+      ],
+      "hotspots": [
+        {
+          "id": "s_31703178_0",
+          "label": "→ 前往鸟瞰全景",
+          "target": "20071519",
+          "yaw": 46.141,
+          "pitch": 80.536,
+          "source": "720yun",
+          "sourceAngles": {
+            "ath": 46.141,
+            "atv": -80.536
+          }
+        },
+        {
+          "id": "s_31703178_1",
+          "label": "→ 前往88级台阶",
+          "target": "20071502",
+          "yaw": -40.427,
+          "pitch": 1.693,
+          "source": "720yun",
+          "sourceAngles": {
+            "ath": -40.427,
+            "atv": -1.693
+          }
+        },
+        {
+          "id": "s_31703178_2",
+          "label": "→ 前往文虎楼",
+          "target": "20071523",
+          "yaw": 98.316,
+          "pitch": 4.543,
+          "source": "720yun",
+          "sourceAngles": {
+            "ath": 98.316,
+            "atv": -4.543
+          }
+        },
+        {
+          "id": "s_31703178_3",
+          "label": "→ 前往图书馆",
+          "target": "20071521",
+          "yaw": 37.063,
+          "pitch": 6.439,
+          "source": "720yun",
+          "sourceAngles": {
+            "ath": 37.063,
+            "atv": -6.439
+          }
+        },
+        {
+          "id": "s_31703178_4",
+          "label": "→ 前往传媒实验中心",
+          "target": "20071504",
+          "yaw": 146.145,
+          "pitch": 0.30400000000000027,
+          "source": "720yun",
+          "sourceAngles": {
+            "ath": 146.145,
+            "atv": -0.30400000000000027
+          }
+        },
+        {
+          "id": "reverse_20071518_20071526",
+          "label": "→ 前往学生宿舍区",
+          "target": "20071526",
+          "yaw": -32,
+          "pitch": -10,
+          "source": "supplemental-reverse",
+          "reverseOf": "s_31703186_7",
+          "note": "根据原导航已有连接补充反向跳转；胶囊位置为界面排布，非实测道路方位。"
+        },
+        {
+          "id": "reverse_20071518_20071505",
+          "label": "→ 前往风雨篮球场",
+          "target": "20071505",
+          "yaw": -10,
+          "pitch": -10,
+          "source": "supplemental-reverse",
+          "reverseOf": "s_31703165_2",
+          "note": "根据原导航已有连接补充反向跳转；胶囊位置为界面排布，非实测道路方位。"
+        },
+        {
+          "id": "reverse_20071518_46495202",
+          "label": "→ 前往研究生公寓",
+          "target": "46495202",
+          "yaw": 12,
+          "pitch": -10,
+          "source": "supplemental-reverse",
+          "reverseOf": "s_83335520_2",
+          "note": "根据原导航已有连接补充反向跳转；胶囊位置为界面排布，非实测道路方位。"
+        },
+        {
+          "id": "reverse_20071518_46495198",
+          "label": "→ 前往学生活动中心",
+          "target": "46495198",
+          "yaw": 34,
+          "pitch": -10,
+          "source": "supplemental-reverse",
+          "reverseOf": "s_83335522_1",
+          "note": "根据原导航已有连接补充反向跳转；胶囊位置为界面排布，非实测道路方位。"
+        },
+        {
+          "id": "reverse_20071518_46495197",
+          "label": "→ 前往德兴楼",
+          "target": "46495197",
+          "yaw": -32,
+          "pitch": -23,
+          "source": "supplemental-reverse",
+          "reverseOf": "s_83335523_2",
+          "note": "根据原导航已有连接补充反向跳转；胶囊位置为界面排布，非实测道路方位。"
+        },
+        {
+          "id": "route_20071518_20071520",
+          "label": "→ 前往图书馆（二楼）（经图书馆）",
+          "target": "20071520",
+          "yaw": -10,
+          "pitch": -23,
+          "source": "supplemental-route",
+          "route": [
+            "20071518",
+            "20071521",
+            "20071520"
+          ],
+          "note": "沿已有双向导航连接补充的两段快捷跳转，经龙工图书馆；不代表新增直连道路，胶囊位置非实测方位。"
+        }
+      ],
+      "description": "同心广场是校园里适合停留和集合的开放空间，适合先看看周边建筑。",
+      "descriptionStatus": "official-gallery",
+      "descriptionSources": [
+        {
+          "url": "https://www.lyun.edu.cn/info/1013/6951.htm",
+          "title": "同心广场-龙岩学院",
+          "accessed": "2026-10-30"
+        }
+      ],
+      "shortDescription": "同心广场是校园里适合停留和集合的开放空间，适合先看看周边建筑。",
+      "descriptionTone": "friendly-guide"
+    },
+    {
+      "id": "20071521",
+      "name": "龙工图书馆",
+      "category": "教学办公区",
+      "menuLabel": "图书馆",
+      "menuOrder": 2,
+      "panorama": "assets/panoramas/20071521.webp",
+      "thumbnail": "assets/panoramas/thumbnails/20071521.webp",
+      "position": null,
+      "neighbors": [
+        "20071520",
+        "20071518",
+        "20071516",
+        "46386863",
+        "46495201"
+      ],
+      "hotspots": [
+        {
+          "id": "s_31703181_0",
+          "label": "→ 前往图书馆（二楼）",
+          "target": "20071520",
+          "yaw": 92.14,
+          "pitch": -4.284000000000001,
+          "source": "720yun",
+          "sourceAngles": {
+            "ath": 92.14,
+            "atv": 4.284000000000001
+          }
+        },
+        {
+          "id": "s_31703181_1",
+          "label": "→ 前往同心广场",
+          "target": "20071518",
+          "yaw": 1.792,
+          "pitch": 0.7130000000000001,
+          "source": "720yun",
+          "sourceAngles": {
+            "ath": 1.792,
+            "atv": -0.7130000000000001
+          }
+        },
+        {
+          "id": "s_31703181_2",
+          "label": "→ 前往桃心湖",
+          "target": "20071516",
+          "yaw": -91.568,
+          "pitch": 2.637,
+          "source": "720yun",
+          "sourceAngles": {
+            "ath": -91.568,
+            "atv": -2.637
+          }
+        },
+        {
+          "id": "reverse_20071521_46386863",
+          "label": "→ 前往东区田径场",
+          "target": "46386863",
+          "yaw": -32,
+          "pitch": -10,
+          "source": "supplemental-reverse",
+          "reverseOf": "s_83110854_4",
+          "note": "根据原导航已有连接补充反向跳转；胶囊位置为界面排布，非实测道路方位。"
+        },
+        {
+          "id": "reverse_20071521_46495201",
+          "label": "→ 前往学生服务中心",
+          "target": "46495201",
+          "yaw": -10,
+          "pitch": -10,
+          "source": "supplemental-reverse",
+          "reverseOf": "s_83335521_2",
+          "note": "根据原导航已有连接补充反向跳转；胶囊位置为界面排布，非实测道路方位。"
+        }
+      ],
+      "description": "龙工图书馆提供阅览座位、纸质文献和数字资源，是学习和查资料的常用地点。",
+      "descriptionStatus": "official-summary",
+      "descriptionSources": [
+        {
+          "url": "https://lib.lyun.edu.cn/bggk/bgjj.htm",
+          "title": "本馆简介-龙岩学院图书馆",
+          "accessed": "2026-10-30"
+        }
+      ],
+      "shortDescription": "龙工图书馆提供阅览座位、纸质文献和数字资源，是学习和查资料的常用地点。",
+      "descriptionTone": "friendly-guide"
+    },
+    {
+      "id": "20071520",
+      "name": "图书馆（二楼）",
+      "category": "教学办公区",
+      "menuLabel": "图书馆（二楼）",
+      "menuOrder": 3,
+      "panorama": "assets/panoramas/20071520.webp",
+      "thumbnail": "assets/panoramas/thumbnails/20071520.webp",
+      "position": null,
+      "neighbors": [
+        "20071521",
+        "20071518"
+      ],
+      "hotspots": [
+        {
+          "id": "s_31703180_0",
+          "label": "→ 前往图书馆",
+          "target": "20071521",
+          "yaw": 1.69,
+          "pitch": -2.074,
+          "source": "720yun",
+          "sourceAngles": {
+            "ath": 1.69,
+            "atv": 2.074
+          }
+        },
+        {
+          "id": "route_20071520_20071518",
+          "label": "→ 前往同心广场（经图书馆）",
+          "target": "20071518",
+          "yaw": -32,
+          "pitch": -10,
+          "source": "supplemental-route",
+          "route": [
+            "20071520",
+            "20071521",
+            "20071518"
+          ],
+          "note": "沿已有双向导航连接补充的两段快捷跳转，经龙工图书馆；不代表新增直连道路，胶囊位置非实测方位。"
+        }
+      ],
+      "description": "二楼可以找到社会科学类书库，文学、历史、经济等方向的资料都能在这里查阅。",
+      "descriptionStatus": "official-summary",
+      "descriptionSources": [
+        {
+          "url": "https://lib.lyun.edu.cn/gzzd1/gzfbykfsj.htm",
+          "title": "馆藏分布与开放时间-龙岩学院图书馆",
+          "accessed": "2026-10-30"
+        }
+      ],
+      "shortDescription": "二楼可以找到社会科学类书库，文学、历史、经济等方向的资料都能在这里查阅。",
+      "descriptionTone": "friendly-guide"
+    },
+    {
+      "id": "20071517",
+      "name": "体育馆",
+      "category": "运动休闲区",
+      "menuLabel": "体育馆",
+      "menuOrder": 6,
+      "panorama": "assets/panoramas/20071517.webp",
+      "thumbnail": "assets/panoramas/thumbnails/20071517.webp",
+      "position": null,
+      "neighbors": [
+        "20071508",
+        "20071524",
+        "20071515",
+        "20071519"
+      ],
+      "hotspots": [
+        {
+          "id": "s_31703177_0",
+          "label": "→ 前往行政楼",
+          "target": "20071508",
+          "yaw": -131.938,
+          "pitch": 4.258,
+          "source": "720yun",
+          "sourceAngles": {
+            "ath": -131.938,
+            "atv": -4.258
+          }
+        },
+        {
+          "id": "s_31703177_1",
+          "label": "→ 前往西区田径场",
+          "target": "20071524",
+          "yaw": -77.919,
+          "pitch": 3.0709999999999997,
+          "source": "720yun",
+          "sourceAngles": {
+            "ath": -77.919,
+            "atv": -3.0709999999999997
+          }
+        },
+        {
+          "id": "s_31703177_2",
+          "label": "→ 前往正大门",
+          "target": "20071515",
+          "yaw": 161.492,
+          "pitch": 7.835,
+          "source": "720yun",
+          "sourceAngles": {
+            "ath": 161.492,
+            "atv": -7.835
+          }
+        },
+        {
+          "id": "reverse_20071517_20071519",
+          "label": "→ 前往鸟瞰全景",
+          "target": "20071519",
+          "yaw": -32,
+          "pitch": -10,
+          "source": "supplemental-reverse",
+          "reverseOf": "s_31703179_2",
+          "note": "根据原导航已有连接补充反向跳转；胶囊位置为界面排布，非实测道路方位。"
+        }
+      ],
+      "description": "这里是校园体育活动的重要场馆，体育馆和恩泽湖景观相邻。",
+      "descriptionStatus": "official-gallery",
+      "descriptionSources": [
+        {
+          "url": "https://www.lyun.edu.cn/info/1013/6957.htm",
+          "title": "体育馆（恩泽湖）-龙岩学院",
+          "accessed": "2026-10-30"
+        }
+      ],
+      "shortDescription": "这里是校园体育活动的重要场馆，体育馆和恩泽湖景观相邻。",
+      "descriptionTone": "friendly-guide"
+    },
+    {
+      "id": "20071507",
+      "name": "福煤楼",
+      "category": "教学办公区",
+      "menuLabel": "福煤楼",
+      "menuOrder": 6,
+      "panorama": "assets/panoramas/20071507.webp",
+      "thumbnail": "assets/panoramas/thumbnails/20071507.webp",
+      "position": null,
+      "neighbors": [
+        "20071529",
+        "20071506",
+        "20071502",
+        "20071519",
+        "46495198"
+      ],
+      "hotspots": [
+        {
+          "id": "s_31703167_0",
+          "label": "→ 前往逸夫实验楼",
+          "target": "20071529",
+          "yaw": 48.944,
+          "pitch": -2.1849999999999996,
+          "source": "720yun",
+          "sourceAngles": {
+            "ath": 48.944,
+            "atv": 2.1849999999999996
+          }
+        },
+        {
+          "id": "s_31703167_1",
+          "label": "→ 前往物机院实验室",
+          "target": "20071506",
+          "yaw": 126.062,
+          "pitch": 26.595,
+          "source": "720yun",
+          "sourceAngles": {
+            "ath": 126.062,
+            "atv": -26.595
+          }
+        },
+        {
+          "id": "reverse_20071507_20071502",
+          "label": "→ 前往88级台阶",
+          "target": "20071502",
+          "yaw": -32,
+          "pitch": -10,
+          "source": "supplemental-reverse",
+          "reverseOf": "s_31703162_2",
+          "note": "根据原导航已有连接补充反向跳转；胶囊位置为界面排布，非实测道路方位。"
+        },
+        {
+          "id": "reverse_20071507_20071519",
+          "label": "→ 前往鸟瞰全景",
+          "target": "20071519",
+          "yaw": -10,
+          "pitch": -10,
+          "source": "supplemental-reverse",
+          "reverseOf": "s_31703179_18",
+          "note": "根据原导航已有连接补充反向跳转；胶囊位置为界面排布，非实测道路方位。"
+        },
+        {
+          "id": "reverse_20071507_46495198",
+          "label": "→ 前往学生活动中心",
+          "target": "46495198",
+          "yaw": 12,
+          "pitch": -10,
+          "source": "supplemental-reverse",
+          "reverseOf": "s_83335522_3",
+          "note": "根据原导航已有连接补充反向跳转；胶囊位置为界面排布，非实测道路方位。"
+        }
+      ],
+      "description": "福煤楼是物理与机电工程学院所在的校园建筑之一，可以从这里前往相关教学实验区域。",
+      "descriptionStatus": "official-gallery",
+      "descriptionSources": [
+        {
+          "url": "https://www.lyun.edu.cn/info/1013/131421.htm",
+          "title": "福煤楼（物理与机电工程学院）-龙岩学院",
+          "accessed": "2026-10-30"
+        }
+      ],
+      "shortDescription": "福煤楼是物理与机电工程学院所在的校园建筑之一，可以从这里前往相关教学实验区域。",
+      "descriptionTone": "friendly-guide"
+    },
+    {
+      "id": "20071506",
+      "name": "物机院实验室",
+      "category": "教学办公区",
+      "menuLabel": "物机院实验室",
+      "menuOrder": 10,
+      "panorama": "assets/panoramas/20071506.webp",
+      "thumbnail": "assets/panoramas/thumbnails/20071506.webp",
+      "position": null,
+      "neighbors": [
+        "20071507",
+        "20071529"
+      ],
+      "hotspots": [
+        {
+          "id": "s_31703166_0",
+          "label": "→ 前往福煤楼",
+          "target": "20071507",
+          "yaw": -130.77,
+          "pitch": 10.213000000000001,
+          "source": "720yun",
+          "sourceAngles": {
+            "ath": -130.77,
+            "atv": -10.213000000000001
+          }
+        },
+        {
+          "id": "route_20071506_20071529",
+          "label": "→ 前往逸夫实验楼（经福煤楼）",
+          "target": "20071529",
+          "yaw": -32,
+          "pitch": -10,
+          "source": "supplemental-route",
+          "route": [
+            "20071506",
+            "20071507",
+            "20071529"
+          ],
+          "note": "沿已有双向导航连接补充的两段快捷跳转，经福煤楼；不代表新增直连道路，胶囊位置非实测方位。"
+        }
+      ],
+      "description": "这里集中着物理、机械和电子等实验教学空间，适合了解物机类实践教学。",
+      "descriptionStatus": "official-summary",
+      "descriptionSources": [
+        {
+          "url": "https://jdgcxy.lyun.edu.cn/info/1066/2598.htm",
+          "title": "物理与机电工程学院(专用机械装备学院)实验室简介-欢迎访问龙岩学院-物理与机电工程学院",
+          "accessed": "2026-10-30"
+        }
+      ],
+      "shortDescription": "这里集中着物理、机械和电子等实验教学空间，适合了解物机类实践教学。",
+      "descriptionTone": "friendly-guide"
+    },
+    {
+      "id": "20071504",
+      "name": "传媒实验教学示范中心（虚拟演播室）",
+      "category": "教学办公区",
+      "menuLabel": "传媒实验中心",
+      "menuOrder": 9,
+      "panorama": "assets/panoramas/20071504.webp",
+      "thumbnail": "assets/panoramas/thumbnails/20071504.webp",
+      "position": null,
+      "neighbors": [
+        "20071518",
+        "20071502"
+      ],
+      "hotspots": [
+        {
+          "id": "s_31703164_0",
+          "label": "→ 前往同心广场",
+          "target": "20071518",
+          "yaw": -17.569,
+          "pitch": -7.869,
+          "source": "720yun",
+          "sourceAngles": {
+            "ath": -17.569,
+            "atv": 7.869
+          }
+        },
+        {
+          "id": "route_20071504_20071502",
+          "label": "→ 前往88级台阶（经同心广场）",
+          "target": "20071502",
+          "yaw": -32,
+          "pitch": -10,
+          "source": "supplemental-route",
+          "route": [
+            "20071504",
+            "20071518",
+            "20071502"
+          ],
+          "note": "沿已有双向导航连接补充的两段快捷跳转，经同心广场；不代表新增直连道路，胶囊位置非实测方位。"
+        }
+      ],
+      "description": "这里有演播、数字媒体、VR/全景等传媒实践空间，适合看看传媒专业如何做项目。",
+      "descriptionStatus": "official-summary",
+      "descriptionSources": [
+        {
+          "url": "https://cmsy.lyun.edu.cn/zxgk.htm",
+          "title": "中心概况-龙岩学院 传媒实验教学示范中心",
+          "accessed": "2026-10-30"
+        },
+        {
+          "url": "https://cmsy.lyun.edu.cn/info/1070/1164.htm",
+          "title": "专业实验室情况-龙岩学院 传媒实验教学示范中心",
+          "accessed": "2026-10-30"
+        }
+      ],
+      "shortDescription": "这里有演播、数字媒体、VR/全景等传媒实践空间，适合看看传媒专业如何做项目。",
+      "descriptionTone": "friendly-guide"
+    },
+    {
+      "id": "20071523",
+      "name": "文虎楼",
+      "category": "教学办公区",
+      "menuLabel": "文虎楼",
+      "menuOrder": 5,
+      "panorama": "assets/panoramas/20071523.webp",
+      "thumbnail": "assets/panoramas/thumbnails/20071523.webp",
+      "position": null,
+      "neighbors": [
+        "20071518",
+        "20071511",
+        "20071519",
+        "20071526",
+        "20071505",
+        "20071514"
+      ],
+      "hotspots": [
+        {
+          "id": "s_31703183_0",
+          "label": "→ 前往同心广场",
+          "target": "20071518",
+          "yaw": 3.966,
+          "pitch": 3.755,
+          "source": "720yun",
+          "sourceAngles": {
+            "ath": 3.966,
+            "atv": -3.755
+          }
+        },
+        {
+          "id": "s_31703183_1",
+          "label": "→ 前往厚德楼",
+          "target": "20071511",
+          "yaw": 160.604,
+          "pitch": 23.211,
+          "source": "720yun",
+          "sourceAngles": {
+            "ath": 160.604,
+            "atv": -23.211
+          }
+        },
+        {
+          "id": "s_31703183_2",
+          "label": "→ 前往鸟瞰全景",
+          "target": "20071519",
+          "yaw": 40.476,
+          "pitch": 40.787,
+          "source": "720yun",
+          "sourceAngles": {
+            "ath": 40.476,
+            "atv": -40.787
+          }
+        },
+        {
+          "id": "reverse_20071523_20071526",
+          "label": "→ 前往学生宿舍区",
+          "target": "20071526",
+          "yaw": -32,
+          "pitch": -10,
+          "source": "supplemental-reverse",
+          "reverseOf": "s_31703186_8",
+          "note": "根据原导航已有连接补充反向跳转；胶囊位置为界面排布，非实测道路方位。"
+        },
+        {
+          "id": "reverse_20071523_20071505",
+          "label": "→ 前往风雨篮球场",
+          "target": "20071505",
+          "yaw": -10,
+          "pitch": -10,
+          "source": "supplemental-reverse",
+          "reverseOf": "s_31703165_1",
+          "note": "根据原导航已有连接补充反向跳转；胶囊位置为界面排布，非实测道路方位。"
+        },
+        {
+          "id": "reverse_20071523_20071514",
+          "label": "→ 前往奇迈篮球场",
+          "target": "20071514",
+          "yaw": 12,
+          "pitch": -10,
+          "source": "supplemental-reverse",
+          "reverseOf": "s_31703174_2",
+          "note": "根据原导航已有连接补充反向跳转；胶囊位置为界面排布，非实测道路方位。"
+        }
+      ],
+      "description": "文虎楼是龙院校园风光中的代表性建筑之一，适合沿周边道路慢慢看看。",
+      "descriptionStatus": "official-gallery",
+      "descriptionSources": [
+        {
+          "url": "https://www.lyun.edu.cn/info/1013/6952.htm",
+          "title": "文虎楼-龙岩学院",
+          "accessed": "2026-10-30"
+        }
+      ],
+      "shortDescription": "文虎楼是龙院校园风光中的代表性建筑之一，适合沿周边道路慢慢看看。",
+      "descriptionTone": "friendly-guide"
+    },
+    {
+      "id": "20071511",
+      "name": "厚德楼",
+      "category": "教学办公区",
+      "menuLabel": "厚德楼",
+      "menuOrder": 4,
+      "panorama": "assets/panoramas/20071511.webp",
+      "thumbnail": "assets/panoramas/thumbnails/20071511.webp",
+      "position": null,
+      "neighbors": [
+        "20071523",
+        "20071519",
+        "20071526",
+        "20071514"
+      ],
+      "hotspots": [
+        {
+          "id": "s_31703171_0",
+          "label": "→ 前往文虎楼",
+          "target": "20071523",
+          "yaw": 177.561,
+          "pitch": 6.629,
+          "source": "720yun",
+          "sourceAngles": {
+            "ath": 177.561,
+            "atv": -6.629
+          }
+        },
+        {
+          "id": "reverse_20071511_20071519",
+          "label": "→ 前往鸟瞰全景",
+          "target": "20071519",
+          "yaw": -32,
+          "pitch": -10,
+          "source": "supplemental-reverse",
+          "reverseOf": "s_31703179_9",
+          "note": "根据原导航已有连接补充反向跳转；胶囊位置为界面排布，非实测道路方位。"
+        },
+        {
+          "id": "reverse_20071511_20071526",
+          "label": "→ 前往学生宿舍区",
+          "target": "20071526",
+          "yaw": -10,
+          "pitch": -10,
+          "source": "supplemental-reverse",
+          "reverseOf": "s_31703186_9",
+          "note": "根据原导航已有连接补充反向跳转；胶囊位置为界面排布，非实测道路方位。"
+        },
+        {
+          "id": "reverse_20071511_20071514",
+          "label": "→ 前往奇迈篮球场",
+          "target": "20071514",
+          "yaw": 12,
+          "pitch": -10,
+          "source": "supplemental-reverse",
+          "reverseOf": "s_31703174_3",
+          "note": "根据原导航已有连接补充反向跳转；胶囊位置为界面排布，非实测道路方位。"
+        }
+      ],
+      "description": "厚德楼位于校园教学办公区域，周边连接着多处学习和办事空间。",
+      "descriptionStatus": "official-gallery",
+      "descriptionSources": [
+        {
+          "url": "https://www.lyun.edu.cn/info/1013/124811.htm",
+          "title": "厚德楼-龙岩学院",
+          "accessed": "2026-10-30"
+        }
+      ],
+      "shortDescription": "厚德楼位于校园教学办公区域，周边连接着多处学习和办事空间。",
+      "descriptionTone": "friendly-guide"
+    },
+    {
+      "id": "20071530",
+      "name": "资源工程学院",
+      "category": "教学办公区",
+      "menuLabel": "资源工程学院",
+      "menuOrder": 11,
+      "panorama": "assets/panoramas/20071530.webp",
+      "thumbnail": "assets/panoramas/thumbnails/20071530.webp",
+      "position": null,
+      "neighbors": [
+        "20071529",
+        "46386508",
+        "46386863",
+        "20071519"
+      ],
+      "hotspots": [
+        {
+          "id": "s_31703190_0",
+          "label": "→ 前往逸夫实验楼",
+          "target": "20071529",
+          "yaw": -82.848,
+          "pitch": 6.498,
+          "source": "720yun",
+          "sourceAngles": {
+            "ath": -82.848,
+            "atv": -6.498
+          }
+        },
+        {
+          "id": "s_31703190_1",
+          "label": "→ 前往新华书店",
+          "target": "46386508",
+          "yaw": -72.817,
+          "pitch": 3.511,
+          "source": "720yun",
+          "sourceAngles": {
+            "ath": -72.817,
+            "atv": -3.511
+          }
+        },
+        {
+          "id": "s_31703190_2",
+          "label": "→ 前往东区田径场",
+          "target": "46386863",
+          "yaw": -165.858,
+          "pitch": 25.865,
+          "source": "720yun",
+          "sourceAngles": {
+            "ath": -165.858,
+            "atv": -25.865
+          }
+        },
+        {
+          "id": "reverse_20071530_20071519",
+          "label": "→ 前往鸟瞰全景",
+          "target": "20071519",
+          "yaw": -32,
+          "pitch": -10,
+          "source": "supplemental-reverse",
+          "reverseOf": "s_31703179_14",
+          "note": "根据原导航已有连接补充反向跳转；胶囊位置为界面排布，非实测道路方位。"
+        }
+      ],
+      "description": "这里是资源工程学院相关教学科研空间，涉及土木、测绘、地球信息等专业方向。",
+      "descriptionStatus": "official-summary",
+      "descriptionSources": [
+        {
+          "url": "https://zygc.lyun.edu.cn/xygk/xyjj.htm",
+          "title": "学院简介-龙岩学院资源工程学院",
+          "accessed": "2026-10-30"
+        }
+      ],
+      "shortDescription": "这里是资源工程学院相关教学科研空间，涉及土木、测绘、地球信息等专业方向。",
+      "descriptionTone": "friendly-guide"
+    },
+    {
+      "id": "46386508",
+      "name": "新华书店",
+      "category": "生活服务区",
+      "menuLabel": "新华书店",
+      "menuOrder": 5,
+      "panorama": "assets/panoramas/46386508.webp",
+      "thumbnail": "assets/panoramas/thumbnails/46386508.webp",
+      "position": null,
+      "neighbors": [
+        "20071530",
+        "20071529"
+      ],
+      "hotspots": [
+        {
+          "id": "s_83110853_0",
+          "label": "→ 前往资源工程学院",
+          "target": "20071530",
+          "yaw": 86.811,
+          "pitch": -3.571999999999999,
+          "source": "720yun",
+          "sourceAngles": {
+            "ath": 86.811,
+            "atv": 3.571999999999999
+          }
+        },
+        {
+          "id": "route_46386508_20071529",
+          "label": "→ 前往逸夫实验楼（经资源工程学院）",
+          "target": "20071529",
+          "yaw": -32,
+          "pitch": -10,
+          "source": "supplemental-route",
+          "route": [
+            "46386508",
+            "20071530",
+            "20071529"
+          ],
+          "note": "沿已有双向导航连接补充的两段快捷跳转，经资源工程学院；不代表新增直连道路，胶囊位置非实测方位。"
+        }
+      ],
+      "description": "校园里的新华书店，平时可以来这里看看教材、读物和学习用品。",
+      "descriptionStatus": "official-context",
+      "descriptionSources": [
+        {
+          "url": "https://htdsd.lyun.edu.cn/info/1006/20530.htm",
+          "title": "【龙岩电视台】龙岩学院校园新华书店揭牌-龙岩学院—红土地视点",
+          "accessed": "2026-10-30"
+        }
+      ],
+      "shortDescription": "校园里的新华书店，平时可以来这里看看教材、读物和学习用品。",
+      "descriptionTone": "friendly-guide"
+    },
+    {
+      "id": "20071526",
+      "name": "学生宿舍区",
+      "category": "生活服务区",
+      "menuLabel": "学生宿舍区",
+      "menuOrder": 3,
+      "panorama": "assets/panoramas/20071526.webp",
+      "thumbnail": "assets/panoramas/thumbnails/20071526.webp",
+      "position": null,
+      "neighbors": [
+        "20071519",
+        "20071514",
+        "20071528",
+        "20071503",
+        "20071516",
+        "46495201",
+        "46386863",
+        "20071518",
+        "20071523",
+        "20071511",
+        "20071524",
+        "20071527",
+        "46495202",
+        "46495197"
+      ],
+      "hotspots": [
+        {
+          "id": "s_31703186_0",
+          "label": "→ 前往鸟瞰全景",
+          "target": "20071519",
+          "yaw": -5.682,
+          "pitch": 14.839,
+          "source": "720yun",
+          "sourceAngles": {
+            "ath": -5.682,
+            "atv": -14.839
+          }
+        },
+        {
+          "id": "s_31703186_1",
+          "label": "→ 前往奇迈篮球场",
+          "target": "20071514",
+          "yaw": -39.441,
+          "pitch": -34.856,
+          "source": "720yun",
+          "sourceAngles": {
+            "ath": -39.441,
+            "atv": 34.856
+          }
+        },
+        {
+          "id": "s_31703186_2",
+          "label": "→ 前往休闲吧",
+          "target": "20071528",
+          "yaw": 44.153,
+          "pitch": -52.958,
+          "source": "720yun",
+          "sourceAngles": {
+            "ath": 44.153,
+            "atv": 52.958
+          }
+        },
+        {
+          "id": "s_31703186_3",
+          "label": "→ 前往菜鸟驿站",
+          "target": "20071503",
+          "yaw": 50.73,
+          "pitch": -40.068,
+          "source": "720yun",
+          "sourceAngles": {
+            "ath": 50.73,
+            "atv": 40.068
+          }
+        },
+        {
+          "id": "s_31703186_4",
+          "label": "→ 前往桃心湖",
+          "target": "20071516",
+          "yaw": 4.923,
+          "pitch": -18.838,
+          "source": "720yun",
+          "sourceAngles": {
+            "ath": 4.923,
+            "atv": 18.838
+          }
+        },
+        {
+          "id": "s_31703186_5",
+          "label": "→ 前往学生服务中心",
+          "target": "46495201",
+          "yaw": 65.769,
+          "pitch": -15.067,
+          "source": "720yun",
+          "sourceAngles": {
+            "ath": 65.769,
+            "atv": 15.067
+          }
+        },
+        {
+          "id": "s_31703186_6",
+          "label": "→ 前往东区田径场",
+          "target": "46386863",
+          "yaw": 32.157,
+          "pitch": -6.369999999999999,
+          "source": "720yun",
+          "sourceAngles": {
+            "ath": 32.157,
+            "atv": 6.369999999999999
+          }
+        },
+        {
+          "id": "s_31703186_7",
+          "label": "→ 前往同心广场",
+          "target": "20071518",
+          "yaw": -7.345,
+          "pitch": -5.599,
+          "source": "720yun",
+          "sourceAngles": {
+            "ath": -7.345,
+            "atv": 5.599
+          }
+        },
+        {
+          "id": "s_31703186_8",
+          "label": "→ 前往文虎楼",
+          "target": "20071523",
+          "yaw": -44.935,
+          "pitch": -6.698,
+          "source": "720yun",
+          "sourceAngles": {
+            "ath": -44.935,
+            "atv": 6.698
+          }
+        },
+        {
+          "id": "s_31703186_9",
+          "label": "→ 前往厚德楼",
+          "target": "20071511",
+          "yaw": -66.879,
+          "pitch": -4.862,
+          "source": "720yun",
+          "sourceAngles": {
+            "ath": -66.879,
+            "atv": 4.862
+          }
+        },
+        {
+          "id": "s_31703186_10",
+          "label": "→ 前往西区田径场",
+          "target": "20071524",
+          "yaw": -16.99,
+          "pitch": -2.0069999999999997,
+          "source": "720yun",
+          "sourceAngles": {
+            "ath": -16.99,
+            "atv": 2.0069999999999997
+          }
+        },
+        {
+          "id": "reverse_20071526_20071527",
+          "label": "→ 前往学生餐厅",
+          "target": "20071527",
+          "yaw": -32,
+          "pitch": -10,
+          "source": "supplemental-reverse",
+          "reverseOf": "s_31703187_1",
+          "note": "根据原导航已有连接补充反向跳转；胶囊位置为界面排布，非实测道路方位。"
+        },
+        {
+          "id": "reverse_20071526_46495202",
+          "label": "→ 前往研究生公寓",
+          "target": "46495202",
+          "yaw": -10,
+          "pitch": -10,
+          "source": "supplemental-reverse",
+          "reverseOf": "s_83335520_3",
+          "note": "根据原导航已有连接补充反向跳转；胶囊位置为界面排布，非实测道路方位。"
+        },
+        {
+          "id": "reverse_20071526_46495197",
+          "label": "→ 前往德兴楼",
+          "target": "46495197",
+          "yaw": 12,
+          "pitch": -10,
+          "source": "supplemental-reverse",
+          "reverseOf": "s_83335523_3",
+          "note": "根据原导航已有连接补充反向跳转；胶囊位置为界面排布，非实测道路方位。"
+        }
+      ],
+      "description": "这里是学生日常生活的主要区域，宿舍和校园生活服务点分布在周边。",
+      "descriptionStatus": "official-gallery",
+      "descriptionSources": [
+        {
+          "url": "https://www.lyun.edu.cn/info/1013/124871.htm",
+          "title": "学生公寓区-龙岩学院",
+          "accessed": "2026-10-30"
+        }
+      ],
+      "shortDescription": "这里是学生日常生活的主要区域，宿舍和校园生活服务点分布在周边。",
+      "descriptionTone": "friendly-guide"
+    },
+    {
+      "id": "20071503",
+      "name": "菜鸟驿站",
+      "category": "生活服务区",
+      "menuLabel": "菜鸟驿站",
+      "menuOrder": 4,
+      "panorama": "assets/panoramas/20071503.webp",
+      "thumbnail": "assets/panoramas/thumbnails/20071503.webp",
+      "position": null,
+      "neighbors": [
+        "20071528",
+        "20071516",
+        "46495201",
+        "20071526"
+      ],
+      "hotspots": [
+        {
+          "id": "s_31703163_0",
+          "label": "→ 前往休闲吧",
+          "target": "20071528",
+          "yaw": -41.048,
+          "pitch": -6.9990000000000006,
+          "source": "720yun",
+          "sourceAngles": {
+            "ath": -41.048,
+            "atv": 6.9990000000000006
+          }
+        },
+        {
+          "id": "s_31703163_1",
+          "label": "→ 前往桃心湖",
+          "target": "20071516",
+          "yaw": -9.162,
+          "pitch": 1.3860000000000001,
+          "source": "720yun",
+          "sourceAngles": {
+            "ath": -9.162,
+            "atv": -1.3860000000000001
+          }
+        },
+        {
+          "id": "s_31703163_2",
+          "label": "→ 前往学生服务中心",
+          "target": "46495201",
+          "yaw": 56.519,
+          "pitch": 2.849,
+          "source": "720yun",
+          "sourceAngles": {
+            "ath": 56.519,
+            "atv": -2.849
+          }
+        },
+        {
+          "id": "reverse_20071503_20071526",
+          "label": "→ 前往学生宿舍区",
+          "target": "20071526",
+          "yaw": -32,
+          "pitch": -10,
+          "source": "supplemental-reverse",
+          "reverseOf": "s_31703186_3",
+          "note": "根据原导航已有连接补充反向跳转；胶囊位置为界面排布，非实测道路方位。"
+        }
+      ],
+      "description": "取寄快递可以先来这里看看，具体营业时间以驿站现场安排为准。",
+      "descriptionStatus": "official-context",
+      "descriptionSources": [
+        {
+          "url": "https://www.lyun.edu.cn/info/1038/11824.htm",
+          "title": "龙岩大学科技园开展消防安全专题培训-龙岩学院",
+          "accessed": "2026-10-30"
+        }
+      ],
+      "shortDescription": "取寄快递可以先来这里看看，具体营业时间以驿站现场安排为准。",
+      "descriptionTone": "friendly-guide"
+    },
+    {
+      "id": "20071505",
+      "name": "风雨篮球场",
+      "category": "运动休闲区",
+      "menuLabel": "风雨篮球场",
+      "menuOrder": 4,
+      "panorama": "assets/panoramas/20071505.webp",
+      "thumbnail": "assets/panoramas/thumbnails/20071505.webp",
+      "position": null,
+      "neighbors": [
+        "20071509",
+        "20071523",
+        "20071518",
+        "20071519"
+      ],
+      "hotspots": [
+        {
+          "id": "s_31703165_0",
+          "label": "→ 前往鹤池艺术楼",
+          "target": "20071509",
+          "yaw": 85.012,
+          "pitch": -0.16600000000000037,
+          "source": "720yun",
+          "sourceAngles": {
+            "ath": 85.012,
+            "atv": 0.16600000000000037
+          }
+        },
+        {
+          "id": "s_31703165_1",
+          "label": "→ 前往文虎楼",
+          "target": "20071523",
+          "yaw": -32.831,
+          "pitch": 9.873999999999999,
+          "source": "720yun",
+          "sourceAngles": {
+            "ath": -32.831,
+            "atv": -9.873999999999999
+          }
+        },
+        {
+          "id": "s_31703165_2",
+          "label": "→ 前往同心广场",
+          "target": "20071518",
+          "yaw": -173.43,
+          "pitch": 3.317,
+          "source": "720yun",
+          "sourceAngles": {
+            "ath": -173.43,
+            "atv": -3.317
+          }
+        },
+        {
+          "id": "reverse_20071505_20071519",
+          "label": "→ 前往鸟瞰全景",
+          "target": "20071519",
+          "yaw": -32,
+          "pitch": -10,
+          "source": "supplemental-reverse",
+          "reverseOf": "s_31703179_5",
+          "note": "根据原导航已有连接补充反向跳转；胶囊位置为界面排布，非实测道路方位。"
+        }
+      ],
+      "description": "想打球或看看校园运动空间，可以从这里开始逛风雨篮球场。",
+      "descriptionStatus": "not-found",
+      "descriptionSources": [],
+      "shortDescription": "想打球或看看校园运动空间，可以从这里开始逛风雨篮球场。",
+      "descriptionTone": "friendly-guide"
+    },
+    {
+      "id": "20071509",
+      "name": "鹤池+艺术楼",
+      "category": "运动休闲区",
+      "menuLabel": "鹤池艺术楼",
+      "menuOrder": 8,
+      "panorama": "assets/panoramas/20071509.webp",
+      "thumbnail": "assets/panoramas/thumbnails/20071509.webp",
+      "position": null,
+      "neighbors": [
+        "20071524",
+        "20071510",
+        "20071522",
+        "20071508",
+        "20071505"
+      ],
+      "hotspots": [
+        {
+          "id": "s_31703169_0",
+          "label": "→ 前往西区田径场",
+          "target": "20071524",
+          "yaw": -163.28,
+          "pitch": 3.258,
+          "source": "720yun",
+          "sourceAngles": {
+            "ath": -163.28,
+            "atv": -3.258
+          }
+        },
+        {
+          "id": "s_31703169_1",
+          "label": "→ 前往后门",
+          "target": "20071510",
+          "yaw": 96.202,
+          "pitch": 0.9089999999999998,
+          "source": "720yun",
+          "sourceAngles": {
+            "ath": 96.202,
+            "atv": -0.9089999999999998
+          }
+        },
+        {
+          "id": "s_31703169_2",
+          "label": "→ 前往网球场",
+          "target": "20071522",
+          "yaw": -113.549,
+          "pitch": 9.85,
+          "source": "720yun",
+          "sourceAngles": {
+            "ath": -113.549,
+            "atv": -9.85
+          }
+        },
+        {
+          "id": "s_31703169_3",
+          "label": "→ 前往行政楼",
+          "target": "20071508",
+          "yaw": -143.782,
+          "pitch": 5.842,
+          "source": "720yun",
+          "sourceAngles": {
+            "ath": -143.782,
+            "atv": -5.842
+          }
+        },
+        {
+          "id": "reverse_20071509_20071505",
+          "label": "→ 前往风雨篮球场",
+          "target": "20071505",
+          "yaw": -32,
+          "pitch": -10,
+          "source": "supplemental-reverse",
+          "reverseOf": "s_31703165_0",
+          "note": "根据原导航已有连接补充反向跳转；胶囊位置为界面排布，非实测道路方位。"
+        }
+      ],
+      "description": "鹤池和艺术楼连在同一段校园景观里，适合边走边看校园的艺术氛围。",
+      "descriptionStatus": "official-gallery",
+      "descriptionSources": [
+        {
+          "url": "https://www.lyun.edu.cn/info/1013/124901.htm",
+          "title": "鹤池-龙岩学院",
+          "accessed": "2026-10-30"
+        }
+      ],
+      "shortDescription": "鹤池和艺术楼连在同一段校园景观里，适合边走边看校园的艺术氛围。",
+      "descriptionTone": "friendly-guide"
+    },
+    {
+      "id": "20071514",
+      "name": "奇迈篮球场",
+      "category": "运动休闲区",
+      "menuLabel": "奇迈篮球场",
+      "menuOrder": 3,
+      "panorama": "assets/panoramas/20071514.webp",
+      "thumbnail": "assets/panoramas/thumbnails/20071514.webp",
+      "position": null,
+      "neighbors": [
+        "20071527",
+        "20071526",
+        "20071523",
+        "20071511",
+        "20071516",
+        "20071519"
+      ],
+      "hotspots": [
+        {
+          "id": "s_31703174_0",
+          "label": "→ 前往学生餐厅",
+          "target": "20071527",
+          "yaw": -29.991,
+          "pitch": 19.951,
+          "source": "720yun",
+          "sourceAngles": {
+            "ath": -29.991,
+            "atv": -19.951
+          }
+        },
+        {
+          "id": "s_31703174_1",
+          "label": "→ 前往学生宿舍区",
+          "target": "20071526",
+          "yaw": -57.84,
+          "pitch": 39.782,
+          "source": "720yun",
+          "sourceAngles": {
+            "ath": -57.84,
+            "atv": -39.782
+          }
+        },
+        {
+          "id": "s_31703174_2",
+          "label": "→ 前往文虎楼",
+          "target": "20071523",
+          "yaw": 115.468,
+          "pitch": 28.949,
+          "source": "720yun",
+          "sourceAngles": {
+            "ath": 115.468,
+            "atv": -28.949
+          }
+        },
+        {
+          "id": "s_31703174_3",
+          "label": "→ 前往厚德楼",
+          "target": "20071511",
+          "yaw": 82.108,
+          "pitch": 23.886,
+          "source": "720yun",
+          "sourceAngles": {
+            "ath": 82.108,
+            "atv": -23.886
+          }
+        },
+        {
+          "id": "s_31703174_4",
+          "label": "→ 前往桃心湖",
+          "target": "20071516",
+          "yaw": -133.783,
+          "pitch": 10.642,
+          "source": "720yun",
+          "sourceAngles": {
+            "ath": -133.783,
+            "atv": -10.642
+          }
+        },
+        {
+          "id": "reverse_20071514_20071519",
+          "label": "→ 前往鸟瞰全景",
+          "target": "20071519",
+          "yaw": -32,
+          "pitch": -10,
+          "source": "supplemental-reverse",
+          "reverseOf": "s_31703179_11",
+          "note": "根据原导航已有连接补充反向跳转；胶囊位置为界面排布，非实测道路方位。"
+        }
+      ],
+      "description": "这里是校园篮球活动场地之一，天气合适时可以来看看场地和周边动线。",
+      "descriptionStatus": "official-gallery",
+      "descriptionSources": [
+        {
+          "url": "https://www.lyun.edu.cn/info/1013/124921.htm",
+          "title": "奇迈篮球场-龙岩学院",
+          "accessed": "2026-10-30"
+        }
+      ],
+      "shortDescription": "这里是校园篮球活动场地之一，天气合适时可以来看看场地和周边动线。",
+      "descriptionTone": "friendly-guide"
+    },
+    {
+      "id": "20071516",
+      "name": "桃心湖",
+      "category": "运动休闲区",
+      "menuLabel": "桃心湖",
+      "menuOrder": 7,
+      "panorama": "assets/panoramas/20071516.webp",
+      "thumbnail": "assets/panoramas/thumbnails/20071516.webp",
+      "position": null,
+      "neighbors": [
+        "20071521",
+        "20071526",
+        "46386863",
+        "20071519",
+        "20071503",
+        "20071514"
+      ],
+      "hotspots": [
+        {
+          "id": "s_31703176_0",
+          "label": "→ 前往图书馆",
+          "target": "20071521",
+          "yaw": 101.123,
+          "pitch": 3.011,
+          "source": "720yun",
+          "sourceAngles": {
+            "ath": 101.123,
+            "atv": -3.011
+          }
+        },
+        {
+          "id": "s_31703176_1",
+          "label": "→ 前往学生宿舍区",
+          "target": "20071526",
+          "yaw": -114.573,
+          "pitch": 26.656,
+          "source": "720yun",
+          "sourceAngles": {
+            "ath": -114.573,
+            "atv": -26.656
+          }
+        },
+        {
+          "id": "s_31703176_2",
+          "label": "→ 前往东区田径场",
+          "target": "46386863",
+          "yaw": 148.038,
+          "pitch": 25.565,
+          "source": "720yun",
+          "sourceAngles": {
+            "ath": 148.038,
+            "atv": -25.565
+          }
+        },
+        {
+          "id": "s_31703176_3",
+          "label": "→ 前往鸟瞰全景",
+          "target": "20071519",
+          "yaw": 68.59,
+          "pitch": 55.743,
+          "source": "720yun",
+          "sourceAngles": {
+            "ath": 68.59,
+            "atv": -55.743
+          }
+        },
+        {
+          "id": "reverse_20071516_20071503",
+          "label": "→ 前往菜鸟驿站",
+          "target": "20071503",
+          "yaw": -32,
+          "pitch": -10,
+          "source": "supplemental-reverse",
+          "reverseOf": "s_31703163_1",
+          "note": "根据原导航已有连接补充反向跳转；胶囊位置为界面排布，非实测道路方位。"
+        },
+        {
+          "id": "reverse_20071516_20071514",
+          "label": "→ 前往奇迈篮球场",
+          "target": "20071514",
+          "yaw": -10,
+          "pitch": -10,
+          "source": "supplemental-reverse",
+          "reverseOf": "s_31703174_4",
+          "note": "根据原导航已有连接补充反向跳转；胶囊位置为界面排布，非实测道路方位。"
+        }
+      ],
+      "description": "桃心湖是校园里的水景空间，适合放慢脚步看看湖边景色。",
+      "descriptionStatus": "official-gallery",
+      "descriptionSources": [
+        {
+          "url": "https://www.lyun.edu.cn/info/1013/124941.htm",
+          "title": "桃心湖-龙岩学院",
+          "accessed": "2026-10-30"
+        }
+      ],
+      "shortDescription": "桃心湖是校园里的水景空间，适合放慢脚步看看湖边景色。",
+      "descriptionTone": "friendly-guide"
+    },
+    {
+      "id": "20071522",
+      "name": "网球场",
+      "category": "运动休闲区",
+      "menuLabel": "网球场",
+      "menuOrder": 5,
+      "panorama": "assets/panoramas/20071522.webp",
+      "thumbnail": "assets/panoramas/thumbnails/20071522.webp",
+      "position": null,
+      "neighbors": [
+        "20071509",
+        "20071524",
+        "20071519"
+      ],
+      "hotspots": [
+        {
+          "id": "s_31703182_0",
+          "label": "→ 前往鹤池艺术楼",
+          "target": "20071509",
+          "yaw": 26.321,
+          "pitch": 1.6789999999999998,
+          "source": "720yun",
+          "sourceAngles": {
+            "ath": 26.321,
+            "atv": -1.6789999999999998
+          }
+        },
+        {
+          "id": "s_31703182_1",
+          "label": "→ 前往西区田径场",
+          "target": "20071524",
+          "yaw": 111.841,
+          "pitch": 2.961,
+          "source": "720yun",
+          "sourceAngles": {
+            "ath": 111.841,
+            "atv": -2.961
+          }
+        },
+        {
+          "id": "s_31703182_2",
+          "label": "→ 前往鸟瞰全景",
+          "target": "20071519",
+          "yaw": -81.485,
+          "pitch": 60.036,
+          "source": "720yun",
+          "sourceAngles": {
+            "ath": -81.485,
+            "atv": -60.036
+          }
+        }
+      ],
+      "description": "这里是校园网球运动空间，后勤报道还提到过网球场练习设施建设。",
+      "descriptionStatus": "official-context",
+      "descriptionSources": [
+        {
+          "url": "https://htdsd.lyun.edu.cn/info/1199/41629.htm",
+          "title": "后勤基建处抢抓暑假“黄金期”提升后勤服务和基础建设品质-龙岩学院—红土地视点",
+          "accessed": "2026-10-30"
+        }
+      ],
+      "shortDescription": "这里是校园网球运动空间，后勤报道还提到过网球场练习设施建设。",
+      "descriptionTone": "friendly-guide"
+    },
+    {
+      "id": "20071529",
+      "name": "逸夫实验楼",
+      "category": "教学办公区",
+      "menuLabel": "逸夫实验楼",
+      "menuOrder": 8,
+      "panorama": "assets/panoramas/20071529.webp",
+      "thumbnail": "assets/panoramas/thumbnails/20071529.webp",
+      "position": null,
+      "neighbors": [
+        "20071530",
+        "20071507",
+        "20071502",
+        "20071519",
+        "46495198",
+        "20071506",
+        "46386508"
+      ],
+      "hotspots": [
+        {
+          "id": "s_31703189_0",
+          "label": "→ 前往资源工程学院",
+          "target": "20071530",
+          "yaw": -44.476,
+          "pitch": 12.003,
+          "source": "720yun",
+          "sourceAngles": {
+            "ath": -44.476,
+            "atv": -12.003
+          }
+        },
+        {
+          "id": "s_31703189_1",
+          "label": "→ 前往福煤楼",
+          "target": "20071507",
+          "yaw": 145.789,
+          "pitch": 1.1099999999999999,
+          "source": "720yun",
+          "sourceAngles": {
+            "ath": 145.789,
+            "atv": -1.1099999999999999
+          }
+        },
+        {
+          "id": "s_31703189_2",
+          "label": "→ 前往88级台阶",
+          "target": "20071502",
+          "yaw": 89.484,
+          "pitch": 9.07,
+          "source": "720yun",
+          "sourceAngles": {
+            "ath": 89.484,
+            "atv": -9.07
+          }
+        },
+        {
+          "id": "s_31703189_3",
+          "label": "→ 前往鸟瞰全景",
+          "target": "20071519",
+          "yaw": 39.611,
+          "pitch": 45.65,
+          "source": "720yun",
+          "sourceAngles": {
+            "ath": 39.611,
+            "atv": -45.65
+          }
+        },
+        {
+          "id": "reverse_20071529_46495198",
+          "label": "→ 前往学生活动中心",
+          "target": "46495198",
+          "yaw": -32,
+          "pitch": -10,
+          "source": "supplemental-reverse",
+          "reverseOf": "s_83335522_5",
+          "note": "根据原导航已有连接补充反向跳转；胶囊位置为界面排布，非实测道路方位。"
+        },
+        {
+          "id": "route_20071529_20071506",
+          "label": "→ 前往物机院实验室（经福煤楼）",
+          "target": "20071506",
+          "yaw": -10,
+          "pitch": -10,
+          "source": "supplemental-route",
+          "route": [
+            "20071529",
+            "20071507",
+            "20071506"
+          ],
+          "note": "沿已有双向导航连接补充的两段快捷跳转，经福煤楼；不代表新增直连道路，胶囊位置非实测方位。"
+        },
+        {
+          "id": "route_20071529_46386508",
+          "label": "→ 前往新华书店（经资源工程学院）",
+          "target": "46386508",
+          "yaw": 12,
+          "pitch": -10,
+          "source": "supplemental-route",
+          "route": [
+            "20071529",
+            "20071530",
+            "46386508"
+          ],
+          "note": "沿已有双向导航连接补充的两段快捷跳转，经资源工程学院；不代表新增直连道路，胶囊位置非实测方位。"
+        }
+      ],
+      "description": "逸夫实验楼属于校园实验教学空间，适合沿周边路线继续探索。",
+      "descriptionStatus": "official-gallery",
+      "descriptionSources": [
+        {
+          "url": "https://www.lyun.edu.cn/info/1013/124861.htm",
+          "title": "逸夫实验楼-龙岩学院",
+          "accessed": "2026-10-30"
+        }
+      ],
+      "shortDescription": "逸夫实验楼属于校园实验教学空间，适合沿周边路线继续探索。",
+      "descriptionTone": "friendly-guide"
+    },
+    {
+      "id": "20071524",
+      "name": "西区田径场",
+      "category": "运动休闲区",
+      "menuLabel": "西区田径场",
+      "menuOrder": 1,
+      "panorama": "assets/panoramas/20071524.webp",
+      "thumbnail": "assets/panoramas/thumbnails/20071524.webp",
+      "position": null,
+      "neighbors": [
+        "20071509",
+        "20071510",
+        "20071508",
+        "20071519",
+        "20071517",
+        "20071526",
+        "20071522",
+        "46495202",
+        "46495197"
+      ],
+      "hotspots": [
+        {
+          "id": "s_31703184_0",
+          "label": "→ 前往鹤池艺术楼",
+          "target": "20071509",
+          "yaw": -116.192,
+          "pitch": 2.993,
+          "source": "720yun",
+          "sourceAngles": {
+            "ath": -116.192,
+            "atv": -2.993
+          }
+        },
+        {
+          "id": "s_31703184_1",
+          "label": "→ 前往后门",
+          "target": "20071510",
+          "yaw": -45.815,
+          "pitch": 2.491,
+          "source": "720yun",
+          "sourceAngles": {
+            "ath": -45.815,
+            "atv": -2.491
+          }
+        },
+        {
+          "id": "s_31703184_2",
+          "label": "→ 前往行政楼",
+          "target": "20071508",
+          "yaw": 151.062,
+          "pitch": 17.756999999999998,
+          "source": "720yun",
+          "sourceAngles": {
+            "ath": 151.062,
+            "atv": -17.756999999999998
+          }
+        },
+        {
+          "id": "s_31703184_3",
+          "label": "→ 前往鸟瞰全景",
+          "target": "20071519",
+          "yaw": 179.472,
+          "pitch": 52.996,
+          "source": "720yun",
+          "sourceAngles": {
+            "ath": 179.472,
+            "atv": -52.996
+          }
+        },
+        {
+          "id": "reverse_20071524_20071517",
+          "label": "→ 前往体育馆",
+          "target": "20071517",
+          "yaw": -32,
+          "pitch": -10,
+          "source": "supplemental-reverse",
+          "reverseOf": "s_31703177_1",
+          "note": "根据原导航已有连接补充反向跳转；胶囊位置为界面排布，非实测道路方位。"
+        },
+        {
+          "id": "reverse_20071524_20071526",
+          "label": "→ 前往学生宿舍区",
+          "target": "20071526",
+          "yaw": -10,
+          "pitch": -10,
+          "source": "supplemental-reverse",
+          "reverseOf": "s_31703186_10",
+          "note": "根据原导航已有连接补充反向跳转；胶囊位置为界面排布，非实测道路方位。"
+        },
+        {
+          "id": "reverse_20071524_20071522",
+          "label": "→ 前往网球场",
+          "target": "20071522",
+          "yaw": 12,
+          "pitch": -10,
+          "source": "supplemental-reverse",
+          "reverseOf": "s_31703182_1",
+          "note": "根据原导航已有连接补充反向跳转；胶囊位置为界面排布，非实测道路方位。"
+        },
+        {
+          "id": "reverse_20071524_46495202",
+          "label": "→ 前往研究生公寓",
+          "target": "46495202",
+          "yaw": 34,
+          "pitch": -10,
+          "source": "supplemental-reverse",
+          "reverseOf": "s_83335520_1",
+          "note": "根据原导航已有连接补充反向跳转；胶囊位置为界面排布，非实测道路方位。"
+        },
+        {
+          "id": "reverse_20071524_46495197",
+          "label": "→ 前往德兴楼",
+          "target": "46495197",
+          "yaw": -32,
+          "pitch": -23,
+          "source": "supplemental-reverse",
+          "reverseOf": "s_83335523_1",
+          "note": "根据原导航已有连接补充反向跳转；胶囊位置为界面排布，非实测道路方位。"
+        }
+      ],
+      "description": "西区田径场是校园大型集体活动和体育锻炼的开阔场地。",
+      "descriptionStatus": "official-context",
+      "descriptionSources": [
+        {
+          "url": "https://htdsd.lyun.edu.cn/info/1199/70269.htm",
+          "title": "歌唱祖国｜龙岩学院举行2026年国庆升旗仪式-龙岩学院—红土地视点",
+          "accessed": "2026-10-30"
+        }
+      ],
+      "shortDescription": "西区田径场是校园大型集体活动和体育锻炼的开阔场地。",
+      "descriptionTone": "friendly-guide"
+    },
+    {
+      "id": "20071527",
+      "name": "学生餐厅",
+      "category": "生活服务区",
+      "menuLabel": "学生餐厅",
+      "menuOrder": 2,
+      "panorama": "assets/panoramas/20071527.webp",
+      "thumbnail": "assets/panoramas/thumbnails/20071527.webp",
+      "position": null,
+      "neighbors": [
+        "20071514",
+        "20071526"
+      ],
+      "hotspots": [
+        {
+          "id": "s_31703187_0",
+          "label": "→ 前往奇迈篮球场",
+          "target": "20071514",
+          "yaw": 76.899,
+          "pitch": -1.5039999999999996,
+          "source": "720yun",
+          "sourceAngles": {
+            "ath": 76.899,
+            "atv": 1.5039999999999996
+          }
+        },
+        {
+          "id": "s_31703187_1",
+          "label": "→ 前往学生宿舍区",
+          "target": "20071526",
+          "yaw": -363.5355833888366,
+          "pitch": 8.348080457517952,
+          "source": "720yun",
+          "sourceAngles": {
+            "ath": -363.5355833888366,
+            "atv": -8.348080457517952
+          }
+        }
+      ],
+      "description": "到饭点可以来这里看看，校园餐厅为师生提供日常用餐服务。",
+      "descriptionStatus": "official-context",
+      "descriptionSources": [
+        {
+          "url": "https://hqjjc.lyun.edu.cn/info/1004/5302.htm",
+          "title": "筑牢食品安全防线 护航新学期开学——校领导带队开展全校食堂开学准备专项检查-龙岩学院后勤基建处",
+          "accessed": "2026-10-30"
+        }
+      ],
+      "shortDescription": "到饭点可以来这里看看，校园餐厅为师生提供日常用餐服务。",
+      "descriptionTone": "friendly-guide"
+    },
+    {
+      "id": "20071528",
+      "name": "休闲吧",
+      "category": "生活服务区",
+      "menuLabel": "休闲吧",
+      "menuOrder": 6,
+      "panorama": "assets/panoramas/20071528.webp",
+      "thumbnail": "assets/panoramas/thumbnails/20071528.webp",
+      "position": null,
+      "neighbors": [
+        "20071503",
+        "20071526"
+      ],
+      "hotspots": [
+        {
+          "id": "s_31703188_0",
+          "label": "→ 前往菜鸟驿站",
+          "target": "20071503",
+          "yaw": 87.104,
+          "pitch": -5.8870000000000005,
+          "source": "720yun",
+          "sourceAngles": {
+            "ath": 87.104,
+            "atv": 5.8870000000000005
+          }
+        },
+        {
+          "id": "s_31703188_1",
+          "label": "→ 前往学生宿舍区",
+          "target": "20071526",
+          "yaw": -164.004,
+          "pitch": 7.48,
+          "source": "720yun",
+          "sourceAngles": {
+            "ath": -164.004,
+            "atv": -7.48
+          }
+        }
+      ],
+      "description": "这里是校园里适合短暂休息的休闲空间，可以顺路来看看。",
+      "descriptionStatus": "not-found",
+      "descriptionSources": [],
+      "shortDescription": "这里是校园里适合短暂休息的休闲空间，可以顺路来看看。",
+      "descriptionTone": "friendly-guide"
+    },
+    {
+      "id": "20071510",
+      "name": "龙岩学院后门",
+      "category": "校门入口",
+      "menuLabel": "后门",
+      "menuOrder": 2,
+      "panorama": "assets/panoramas/20071510.webp",
+      "thumbnail": "assets/panoramas/thumbnails/20071510.webp",
+      "position": null,
+      "neighbors": [
+        "20071509",
+        "20071519",
+        "20071524",
+        "46495194"
+      ],
+      "hotspots": [
+        {
+          "id": "s_31703170_0",
+          "label": "→ 前往鹤池艺术楼",
+          "target": "20071509",
+          "yaw": -166.002,
+          "pitch": 5.392,
+          "source": "720yun",
+          "sourceAngles": {
+            "ath": -166.002,
+            "atv": -5.392
+          }
+        },
+        {
+          "id": "s_31703170_1",
+          "label": "→ 前往鸟瞰全景",
+          "target": "20071519",
+          "yaw": 179.773,
+          "pitch": 40.399,
+          "source": "720yun",
+          "sourceAngles": {
+            "ath": 179.773,
+            "atv": -40.399
+          }
+        },
+        {
+          "id": "reverse_20071510_20071524",
+          "label": "→ 前往西区田径场",
+          "target": "20071524",
+          "yaw": -32,
+          "pitch": -10,
+          "source": "supplemental-reverse",
+          "reverseOf": "s_31703184_1",
+          "note": "根据原导航已有连接补充反向跳转；胶囊位置为界面排布，非实测道路方位。"
+        },
+        {
+          "id": "reverse_20071510_46495194",
+          "label": "→ 前往创新创业基地",
+          "target": "46495194",
+          "yaw": -10,
+          "pitch": -10,
+          "source": "supplemental-reverse",
+          "reverseOf": "s_83335524_2",
+          "note": "根据原导航已有连接补充反向跳转；胶囊位置为界面排布，非实测道路方位。"
+        }
+      ],
+      "description": "后门是校园出入口之一，熟悉这里可以更方便地规划校园内外路线。",
+      "descriptionStatus": "not-found",
+      "descriptionSources": [],
+      "shortDescription": "后门是校园出入口之一，熟悉这里可以更方便地规划校园内外路线。",
+      "descriptionTone": "friendly-guide"
+    },
+    {
+      "id": "46386863",
+      "name": "东区田径场",
+      "category": "运动休闲区",
+      "menuLabel": "东区田径场",
+      "menuOrder": 2,
+      "panorama": "assets/panoramas/46386863.webp",
+      "thumbnail": "assets/panoramas/thumbnails/46386863.webp",
+      "position": null,
+      "neighbors": [
+        "20071530",
+        "20071519",
+        "46495201",
+        "20071516",
+        "20071521",
+        "46495198",
+        "20071526"
+      ],
+      "hotspots": [
+        {
+          "id": "s_83110854_0",
+          "label": "→ 前往资源工程学院",
+          "target": "20071530",
+          "yaw": 68.777,
+          "pitch": -8.253,
+          "source": "720yun",
+          "sourceAngles": {
+            "ath": 68.777,
+            "atv": 8.253
+          }
+        },
+        {
+          "id": "s_83110854_1",
+          "label": "→ 前往鸟瞰全景",
+          "target": "20071519",
+          "yaw": 1.162,
+          "pitch": 27.908,
+          "source": "720yun",
+          "sourceAngles": {
+            "ath": 1.162,
+            "atv": -27.908
+          }
+        },
+        {
+          "id": "s_83110854_2",
+          "label": "→ 前往学生服务中心",
+          "target": "46495201",
+          "yaw": -133.073,
+          "pitch": 0.4509999999999996,
+          "source": "720yun",
+          "sourceAngles": {
+            "ath": -133.073,
+            "atv": -0.4509999999999996
+          }
+        },
+        {
+          "id": "s_83110854_3",
+          "label": "→ 前往桃心湖",
+          "target": "20071516",
+          "yaw": 288.9184028443729,
+          "pitch": -3.166538998767164,
+          "source": "720yun",
+          "sourceAngles": {
+            "ath": 288.9184028443729,
+            "atv": 3.166538998767164
+          }
+        },
+        {
+          "id": "s_83110854_4",
+          "label": "→ 前往图书馆",
+          "target": "20071521",
+          "yaw": -26.541,
+          "pitch": -8.518,
+          "source": "720yun",
+          "sourceAngles": {
+            "ath": -26.541,
+            "atv": 8.518
+          }
+        },
+        {
+          "id": "s_83110854_5",
+          "label": "→ 前往学生活动中心",
+          "target": "46495198",
+          "yaw": 34.595,
+          "pitch": 3.678,
+          "source": "720yun",
+          "sourceAngles": {
+            "ath": 34.595,
+            "atv": -3.678
+          }
+        },
+        {
+          "id": "reverse_46386863_20071526",
+          "label": "→ 前往学生宿舍区",
+          "target": "20071526",
+          "yaw": -32,
+          "pitch": -10,
+          "source": "supplemental-reverse",
+          "reverseOf": "s_31703186_6",
+          "note": "根据原导航已有连接补充反向跳转；胶囊位置为界面排布，非实测道路方位。"
+        }
+      ],
+      "description": "东区田径场是军训、升旗和体育活动常用的开阔场地。",
+      "descriptionStatus": "official-context",
+      "descriptionSources": [
+        {
+          "url": "https://htdsd.lyun.edu.cn/info/1004/56679.htm",
+          "title": "我校2025级学生军训工作拉开序幕-龙岩学院—红土地视点",
+          "accessed": "2026-10-30"
+        }
+      ],
+      "shortDescription": "东区田径场是军训、升旗和体育活动常用的开阔场地。",
+      "descriptionTone": "friendly-guide"
+    },
+    {
+      "id": "46495202",
+      "name": "研究生公寓",
+      "category": "教学办公区",
+      "menuLabel": "研究生公寓",
+      "menuOrder": 12,
+      "panorama": "assets/panoramas/46495202.webp",
+      "thumbnail": "assets/panoramas/thumbnails/46495202.webp",
+      "position": null,
+      "neighbors": [
+        "46495197",
+        "20071524",
+        "20071518",
+        "20071526",
+        "46495194",
+        "46495195"
+      ],
+      "hotspots": [
+        {
+          "id": "s_83335520_0",
+          "label": "→ 前往德兴楼",
+          "target": "46495197",
+          "yaw": -172.568,
+          "pitch": -18.748,
+          "source": "720yun",
+          "sourceAngles": {
+            "ath": -172.568,
+            "atv": 18.748
+          }
+        },
+        {
+          "id": "s_83335520_1",
+          "label": "→ 前往西区田径场",
+          "target": "20071524",
+          "yaw": 68.217,
+          "pitch": -2.4130000000000003,
+          "source": "720yun",
+          "sourceAngles": {
+            "ath": 68.217,
+            "atv": 2.4130000000000003
+          }
+        },
+        {
+          "id": "s_83335520_2",
+          "label": "→ 前往同心广场",
+          "target": "20071518",
+          "yaw": 135.092,
+          "pitch": 3.468,
+          "source": "720yun",
+          "sourceAngles": {
+            "ath": 135.092,
+            "atv": -3.468
+          }
+        },
+        {
+          "id": "s_83335520_3",
+          "label": "→ 前往学生宿舍区",
+          "target": "20071526",
+          "yaw": 164.023,
+          "pitch": 9.393,
+          "source": "720yun",
+          "sourceAngles": {
+            "ath": 164.023,
+            "atv": -9.393
+          }
+        },
+        {
+          "id": "reverse_46495202_46495194",
+          "label": "→ 前往创新创业基地",
+          "target": "46495194",
+          "yaw": -32,
+          "pitch": -10,
+          "source": "supplemental-reverse",
+          "reverseOf": "s_83335524_1",
+          "note": "根据原导航已有连接补充反向跳转；胶囊位置为界面排布，非实测道路方位。"
+        },
+        {
+          "id": "route_46495202_46495195",
+          "label": "→ 前往创新创业基地内（经创新创业基地）",
+          "target": "46495195",
+          "yaw": -10,
+          "pitch": -10,
+          "source": "supplemental-route",
+          "route": [
+            "46495202",
+            "46495194",
+            "46495195"
+          ],
+          "note": "沿已有双向导航连接补充的两段快捷跳转，经创新创业基地；不代表新增直连道路，胶囊位置非实测方位。"
+        }
+      ],
+      "description": "这里是研究生住宿区域，周边可以继续前往生活服务和学习空间。",
+      "descriptionStatus": "official-gallery",
+      "descriptionSources": [
+        {
+          "url": "https://www.lyun.edu.cn/info/1013/124931.htm",
+          "title": "研究生公寓-龙岩学院",
+          "accessed": "2026-10-30"
+        }
+      ],
+      "shortDescription": "这里是研究生住宿区域，周边可以继续前往生活服务和学习空间。",
+      "descriptionTone": "friendly-guide"
+    },
+    {
+      "id": "46495201",
+      "name": "学生服务中心",
+      "category": "生活服务区",
+      "menuLabel": "学生服务中心",
+      "menuOrder": 1,
+      "panorama": "assets/panoramas/46495201.webp",
+      "thumbnail": "assets/panoramas/thumbnails/46495201.webp",
+      "position": null,
+      "neighbors": [
+        "46386863",
+        "20071526",
+        "20071521",
+        "20071519",
+        "20071503"
+      ],
+      "hotspots": [
+        {
+          "id": "s_83335521_0",
+          "label": "→ 前往东区田径场",
+          "target": "46386863",
+          "yaw": -112.922,
+          "pitch": 26.746,
+          "source": "720yun",
+          "sourceAngles": {
+            "ath": -112.922,
+            "atv": -26.746
+          }
+        },
+        {
+          "id": "s_83335521_1",
+          "label": "→ 前往学生宿舍区",
+          "target": "20071526",
+          "yaw": 83.765,
+          "pitch": 43.767,
+          "source": "720yun",
+          "sourceAngles": {
+            "ath": 83.765,
+            "atv": -43.767
+          }
+        },
+        {
+          "id": "s_83335521_2",
+          "label": "→ 前往图书馆",
+          "target": "20071521",
+          "yaw": -164.946,
+          "pitch": 6.678,
+          "source": "720yun",
+          "sourceAngles": {
+            "ath": -164.946,
+            "atv": -6.678
+          }
+        },
+        {
+          "id": "reverse_46495201_20071519",
+          "label": "→ 前往鸟瞰全景",
+          "target": "20071519",
+          "yaw": -32,
+          "pitch": -10,
+          "source": "supplemental-reverse",
+          "reverseOf": "s_31703179_19",
+          "note": "根据原导航已有连接补充反向跳转；胶囊位置为界面排布，非实测道路方位。"
+        },
+        {
+          "id": "reverse_46495201_20071503",
+          "label": "→ 前往菜鸟驿站",
+          "target": "20071503",
+          "yaw": -10,
+          "pitch": -10,
+          "source": "supplemental-reverse",
+          "reverseOf": "s_31703163_2",
+          "note": "根据原导航已有连接补充反向跳转；胶囊位置为界面排布，非实测道路方位。"
+        }
+      ],
+      "description": "这里会承接校园就业和学生服务活动，新生和毕业生都可以留意相关服务安排。",
+      "descriptionStatus": "official-context",
+      "descriptionSources": [
+        {
+          "url": "https://htdsd.lyun.edu.cn/info/1199/38769.htm",
+          "title": "我校举办2024年春季厦门城市引才推介活动-龙岩学院—红土地视点",
+          "accessed": "2026-10-30"
+        }
+      ],
+      "shortDescription": "这里会承接校园就业和学生服务活动，新生和毕业生都可以留意相关服务安排。",
+      "descriptionTone": "friendly-guide"
+    },
+    {
+      "id": "46495198",
+      "name": "学生活动中心",
+      "category": "生活服务区",
+      "menuLabel": "学生活动中心",
+      "menuOrder": 9,
+      "panorama": "assets/panoramas/46495198.webp",
+      "thumbnail": "assets/panoramas/thumbnails/46495198.webp",
+      "position": null,
+      "neighbors": [
+        "46386863",
+        "20071518",
+        "20071502",
+        "20071507",
+        "20071508",
+        "20071529",
+        "20071519"
+      ],
+      "hotspots": [
+        {
+          "id": "s_83335522_0",
+          "label": "→ 前往东区田径场",
+          "target": "46386863",
+          "yaw": 55.556,
+          "pitch": 7.243,
+          "source": "720yun",
+          "sourceAngles": {
+            "ath": 55.556,
+            "atv": -7.243
+          }
+        },
+        {
+          "id": "s_83335522_1",
+          "label": "→ 前往同心广场",
+          "target": "20071518",
+          "yaw": 147.398,
+          "pitch": 3.556,
+          "source": "720yun",
+          "sourceAngles": {
+            "ath": 147.398,
+            "atv": -3.556
+          }
+        },
+        {
+          "id": "s_83335522_2",
+          "label": "→ 前往88级台阶",
+          "target": "20071502",
+          "yaw": -179.176,
+          "pitch": -8.039,
+          "source": "720yun",
+          "sourceAngles": {
+            "ath": -179.176,
+            "atv": 8.039
+          }
+        },
+        {
+          "id": "s_83335522_3",
+          "label": "→ 前往福煤楼",
+          "target": "20071507",
+          "yaw": -98.113,
+          "pitch": -10.726,
+          "source": "720yun",
+          "sourceAngles": {
+            "ath": -98.113,
+            "atv": 10.726
+          }
+        },
+        {
+          "id": "s_83335522_4",
+          "label": "→ 前往行政楼",
+          "target": "20071508",
+          "yaw": -117.763,
+          "pitch": 0.5350000000000001,
+          "source": "720yun",
+          "sourceAngles": {
+            "ath": -117.763,
+            "atv": -0.5350000000000001
+          }
+        },
+        {
+          "id": "s_83335522_5",
+          "label": "→ 前往逸夫实验楼",
+          "target": "20071529",
+          "yaw": 0.164,
+          "pitch": -4.243,
+          "source": "720yun",
+          "sourceAngles": {
+            "ath": 0.164,
+            "atv": 4.243
+          }
+        },
+        {
+          "id": "s_83335522_6",
+          "label": "→ 前往鸟瞰全景",
+          "target": "20071519",
+          "yaw": 115.836,
+          "pitch": 25.87,
+          "source": "720yun",
+          "sourceAngles": {
+            "ath": 115.836,
+            "atv": -25.87
+          }
+        }
+      ],
+      "description": "这里是校园活动和交流的常用空间，适合看看学生活动场所的整体布局。",
+      "descriptionStatus": "official-gallery",
+      "descriptionSources": [
+        {
+          "url": "https://www.lyun.edu.cn/info/1013/124821.htm",
+          "title": "学生活动中心-龙岩学院",
+          "accessed": "2026-10-30"
+        }
+      ],
+      "shortDescription": "这里是校园活动和交流的常用空间，适合看看学生活动场所的整体布局。",
+      "descriptionTone": "friendly-guide"
+    },
+    {
+      "id": "46495197",
+      "name": "德兴楼",
+      "category": "教学办公区",
+      "menuLabel": "德兴楼",
+      "menuOrder": 13,
+      "panorama": "assets/panoramas/46495197.webp",
+      "thumbnail": "assets/panoramas/thumbnails/46495197.webp",
+      "position": null,
+      "neighbors": [
+        "46495202",
+        "20071524",
+        "20071518",
+        "20071526",
+        "20071519"
+      ],
+      "hotspots": [
+        {
+          "id": "s_83335523_0",
+          "label": "→ 前往研究生公寓",
+          "target": "46495202",
+          "yaw": 103.724,
+          "pitch": 15.808,
+          "source": "720yun",
+          "sourceAngles": {
+            "ath": 103.724,
+            "atv": -15.808
+          }
+        },
+        {
+          "id": "s_83335523_1",
+          "label": "→ 前往西区田径场",
+          "target": "20071524",
+          "yaw": 167.339,
+          "pitch": -1.2329999999999997,
+          "source": "720yun",
+          "sourceAngles": {
+            "ath": 167.339,
+            "atv": 1.2329999999999997
+          }
+        },
+        {
+          "id": "s_83335523_2",
+          "label": "→ 前往同心广场",
+          "target": "20071518",
+          "yaw": -121.45,
+          "pitch": 5.861,
+          "source": "720yun",
+          "sourceAngles": {
+            "ath": -121.45,
+            "atv": -5.861
+          }
+        },
+        {
+          "id": "s_83335523_3",
+          "label": "→ 前往学生宿舍区",
+          "target": "20071526",
+          "yaw": -92.269,
+          "pitch": 10.219000000000001,
+          "source": "720yun",
+          "sourceAngles": {
+            "ath": -92.269,
+            "atv": -10.219000000000001
+          }
+        },
+        {
+          "id": "reverse_46495197_20071519",
+          "label": "→ 前往鸟瞰全景",
+          "target": "20071519",
+          "yaw": -32,
+          "pitch": -10,
+          "source": "supplemental-reverse",
+          "reverseOf": "s_31703179_8",
+          "note": "根据原导航已有连接补充反向跳转；胶囊位置为界面排布，非实测道路方位。"
+        }
+      ],
+      "description": "德兴楼位于校园教学科研区域，周边与生命科学相关学习空间相连。",
+      "descriptionStatus": "official-context",
+      "descriptionSources": [
+        {
+          "url": "https://htdsd.lyun.edu.cn/info/1004/20841.htm",
+          "title": "生科现象（七）| “以兽医学学科为引领，带动生科院学科发展”-龙岩学院—红土地视点",
+          "accessed": "2026-10-30"
+        }
+      ],
+      "shortDescription": "德兴楼位于校园教学科研区域，周边与生命科学相关学习空间相连。",
+      "descriptionTone": "friendly-guide"
+    },
+    {
+      "id": "46495194",
+      "name": "创新创业基地",
+      "category": "生活服务区",
+      "menuLabel": "创新创业基地",
+      "menuOrder": 7,
+      "panorama": "assets/panoramas/46495194.webp",
+      "thumbnail": "assets/panoramas/thumbnails/46495194.webp",
+      "position": null,
+      "neighbors": [
+        "46495195",
+        "46495202",
+        "20071510",
+        "20071519"
+      ],
+      "hotspots": [
+        {
+          "id": "s_83335524_0",
+          "label": "→ 前往创新创业基地内",
+          "target": "46495195",
+          "yaw": -143.17,
+          "pitch": -40.039,
+          "source": "720yun",
+          "sourceAngles": {
+            "ath": -143.17,
+            "atv": 40.039
+          }
+        },
+        {
+          "id": "s_83335524_1",
+          "label": "→ 前往研究生公寓",
+          "target": "46495202",
+          "yaw": 112.384,
+          "pitch": 21.81,
+          "source": "720yun",
+          "sourceAngles": {
+            "ath": 112.384,
+            "atv": -21.81
+          }
+        },
+        {
+          "id": "s_83335524_2",
+          "label": "→ 前往后门",
+          "target": "20071510",
+          "yaw": 15.406,
+          "pitch": -4.179,
+          "source": "720yun",
+          "sourceAngles": {
+            "ath": 15.406,
+            "atv": 4.179
+          }
+        },
+        {
+          "id": "s_83335524_3",
+          "label": "→ 前往鸟瞰全景",
+          "target": "20071519",
+          "yaw": 159.637,
+          "pitch": 27.171,
+          "source": "720yun",
+          "sourceAngles": {
+            "ath": 159.637,
+            "atv": -27.171
+          }
+        }
+      ],
+      "description": "这里是大学生创新创业创造基地，适合了解学校支持学生实践和项目孵化的空间。",
+      "descriptionStatus": "official-gallery",
+      "descriptionSources": [
+        {
+          "url": "https://www.lyun.edu.cn/info/1013/124841.htm",
+          "title": "龙岩学院大学生创新创业创造基地-龙岩学院",
+          "accessed": "2026-10-30"
+        }
+      ],
+      "shortDescription": "这里是大学生创新创业创造基地，适合了解学校支持学生实践和项目孵化的空间。",
+      "descriptionTone": "friendly-guide"
+    },
+    {
+      "id": "46495195",
+      "name": "创新创业基地内",
+      "category": "生活服务区",
+      "menuLabel": "创新创业基地内",
+      "menuOrder": 8,
+      "panorama": "assets/panoramas/46495195.webp",
+      "thumbnail": "assets/panoramas/thumbnails/46495195.webp",
+      "position": null,
+      "neighbors": [
+        "46495194",
+        "46495202"
+      ],
+      "hotspots": [
+        {
+          "id": "supplemental-return-46495195",
+          "label": "→ 返回创新创业基地",
+          "target": "46495194",
+          "yaw": 0,
+          "pitch": -8,
+          "source": "supplemental-return",
+          "note": "原项目此场景无出口；此为补充的界面返回导航，不代表原720云热点或实测方位。"
+        },
+        {
+          "id": "route_46495195_46495202",
+          "label": "→ 前往研究生公寓（经创新创业基地）",
+          "target": "46495202",
+          "yaw": -32,
+          "pitch": -10,
+          "source": "supplemental-route",
+          "route": [
+            "46495195",
+            "46495194",
+            "46495202"
+          ],
+          "note": "沿已有双向导航连接补充的两段快捷跳转，经创新创业基地；不代表新增直连道路，胶囊位置非实测方位。"
+        }
+      ],
+      "description": "这是创新创业基地的内部视角，可以更直观地看看学生项目实践空间。",
+      "descriptionStatus": "official-context",
+      "descriptionSources": [
+        {
+          "url": "https://www.lyun.edu.cn/info/1013/124841.htm",
+          "title": "龙岩学院大学生创新创业创造基地-龙岩学院",
+          "accessed": "2026-10-30"
+        }
+      ],
+      "shortDescription": "这是创新创业基地的内部视角，可以更直观地看看学生项目实践空间。",
+      "descriptionTone": "friendly-guide"
+    }
+  ],
+  "navigationPolicy": "保留127个原始热点；已有连接补齐反向跳转。单出口场景另提供注明经由地点的双向两段快捷跳转；所有补充胶囊位置为界面排布，不是实测方位。鸟瞰连接属于场景导航，不表示步行道路。"
+};
+    </script>
+    <script src="assets/js/campus-guide.js?v=inline-file-support-20261030-1"></script>
+</body>
+</html>
